@@ -22,9 +22,13 @@ const slides = [
     },
 ];
 
-function App() {
+const LoginPage = ({ onLoginSuccess }) => {
     const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
     const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+    // Thêm state để lưu trữ giá trị từ input
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
 
     useEffect(() => {
         // Thiết lập interval để tự động chuyển slide sau mỗi 5 giây
@@ -45,10 +49,36 @@ function App() {
     const handleLogin = (e) => {
         e.preventDefault();
         setIsLoggingIn(true);
-        // Mô phỏng quá trình đăng nhập
+
+        // --- Logic đăng nhập giả lập ---
+        const mockAdminEmail = "admin@example.com";
+        const mockAdminPassword = "password123";
+        const mockCustomerEmail = "customer@example.com";
+        const mockCustomerPassword = "customer123";
+        // Tài khoản nhân viên mới
+        const mockStaffEmail = "staff@example.com";
+        const mockStaffPassword = "staff123";
+
         setTimeout(() => {
             setIsLoggingIn(false);
-            alert("Đăng nhập thành công!");
+            if (email === mockAdminEmail && password === mockAdminPassword) {
+                alert("Đăng nhập với tài khoản Admin thành công!");
+                if (onLoginSuccess) {
+                    onLoginSuccess('admin');
+                }
+            } else if (email === mockCustomerEmail && password === mockCustomerPassword) {
+                alert("Đăng nhập với tài khoản Customer thành công!");
+                if (onLoginSuccess) {
+                    onLoginSuccess('customer');
+                }
+            } else if (email === mockStaffEmail && password === mockStaffPassword) {
+                alert("Đăng nhập với tài khoản Staff thành công!");
+                if (onLoginSuccess) {
+                    onLoginSuccess('staff');
+                }
+            } else {
+                alert("Email hoặc mật khẩu không chính xác!");
+            }
         }, 2000);
     };
 
@@ -61,9 +91,9 @@ function App() {
                 {/* Logo */}
                 <div className="flex flex-col items-center mb-10">
                     <img
-                        src="https://www.freepnglogos.com/uploads/race-car-logo-symbol-speed-png-23.png" // thay bằng link ảnh logo của bạn
+                        src="https://www.freepnglogos.com/uploads/race-car-logo-symbol-speed-png-23.png"
                         alt="GaraX Logo"
-                        className="w-80 h-80 mb-4" // chỉnh kích thước logo nếu muốn
+                        className="w-80 h-80 mb-4"
                     />
                     <h1 className="text-4xl font-extrabold text-gray-800">GaraX</h1>
                 </div>
@@ -83,11 +113,15 @@ function App() {
                         type="email"
                         placeholder="example@email.com"
                         className="w-full px-5 py-4 border rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
                     />
                     <input
                         type="password"
                         placeholder="Password"
                         className="w-full px-5 py-4 border rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
                     />
 
                     <div className="flex justify-between text-base text-gray-500">
@@ -162,6 +196,6 @@ function App() {
             </div>
         </div>
     );
-}
+};
 
-export default App;
+export default LoginPage;
