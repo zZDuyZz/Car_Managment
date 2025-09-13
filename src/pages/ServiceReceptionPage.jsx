@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { FaPlus, FaCar, FaUser, FaClipboardList, FaFileInvoiceDollar, FaRegCalendarAlt } from 'react-icons/fa';
 
 const ServiceReceptionPage = () => {
-    const [isFormOpen, setIsFormOpen] = useState(false);
+    // Chúng ta không cần state để mở form vì form sẽ được mở từ một trang khác.
+    // const [isFormOpen, setIsFormOpen] = useState(false);
     const [formData, setFormData] = useState({
         licensePlate: '',
         customerName: '',
@@ -31,111 +32,56 @@ const ServiceReceptionPage = () => {
             serviceType: 'Bảo dưỡng định kỳ',
             notes: ''
         });
-        setIsFormOpen(false);
+        //setIsFormOpen(false);
     };
 
     return (
         <>
-            <h1 className="text-3xl font-bold text-gray-800 mb-6">Tiếp nhận xe</h1>
-            <div className="flex justify-end mb-4">
-                <button
-                    onClick={() => setIsFormOpen(true)}
-                    className="bg-blue-600 text-white px-6 py-3 rounded-md font-semibold flex items-center shadow-lg hover:bg-blue-700 transition"
-                >
-                    <FaPlus className="mr-2" />
-                    Thêm xe mới
-                </button>
+            <h1 className="text-3xl font-bold text-gray-800 mb-6">Quản lý tiếp nhận xe</h1>
+            {/* Đoạn code của nút "Thêm xe mới" đã được xóa theo yêu cầu.
+                Nút này bị thừa vì chúng ta đã có một liên kết trên Sidebar
+                và một nút trên Dashboard để dẫn đến form tạo phiếu.
+            */}
+
+            {/* Đây là nơi hiển thị danh sách các xe đã tiếp nhận */}
+            <div className="bg-white p-8 rounded-lg shadow-lg">
+                <h2 className="text-xl font-semibold text-gray-700 mb-4">Danh sách xe đang chờ</h2>
+                <div className="overflow-x-auto">
+                    {/* Bảng dữ liệu sẽ được hiển thị ở đây */}
+                    <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                        <tr>
+                            <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Biển số</th>
+                            <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Khách hàng</th>
+                            <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Loại dịch vụ</th>
+                            <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày tiếp nhận</th>
+                            <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hành động</th>
+                        </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                        {/* Dữ liệu mẫu */}
+                        <tr>
+                            <td className="py-3 px-4 whitespace-nowrap text-sm text-gray-800">51A-123.45</td>
+                            <td className="py-3 px-4 whitespace-nowrap text-sm text-gray-800">Nguyễn Văn A</td>
+                            <td className="py-3 px-4 whitespace-nowrap text-sm text-gray-800">Bảo dưỡng định kỳ</td>
+                            <td className="py-3 px-4 whitespace-nowrap text-sm text-gray-800">12/10/2023</td>
+                            <td className="py-3 px-4 whitespace-nowrap text-sm">
+                                <button className="text-blue-600 hover:text-blue-900">Xem chi tiết</button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
+            {/* Modal form đã được di chuyển sang một component riêng biệt (ReceptionForm.jsx).
+                Đoạn code dưới đây không còn cần thiết ở đây nữa.
+            */}
+            {/*
             {isFormOpen && (
-                <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-lg mx-4">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-bold text-gray-800">Thông tin tiếp nhận</h2>
-                            <button
-                                onClick={() => setIsFormOpen(false)}
-                                className="text-gray-500 hover:text-gray-800 text-2xl"
-                            >
-                                &times;
-                            </button>
-                        </div>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div>
-                                <label className="block text-gray-700 font-semibold mb-1 flex items-center">
-                                    <FaCar className="mr-2 text-blue-500" />
-                                    Biển số xe:
-                                </label>
-                                <input
-                                    type="text"
-                                    name="licensePlate"
-                                    value={formData.licensePlate}
-                                    onChange={handleFormChange}
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-gray-700 font-semibold mb-1 flex items-center">
-                                    <FaUser className="mr-2 text-blue-500" />
-                                    Tên khách hàng:
-                                </label>
-                                <input
-                                    type="text"
-                                    name="customerName"
-                                    value={formData.customerName}
-                                    onChange={handleFormChange}
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-gray-700 font-semibold mb-1 flex items-center">
-                                    <FaClipboardList className="mr-2 text-blue-500" />
-                                    Loại dịch vụ:
-                                </label>
-                                <select
-                                    name="serviceType"
-                                    value={formData.serviceType}
-                                    onChange={handleFormChange}
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                >
-                                    <option>Bảo dưỡng định kỳ</option>
-                                    <option>Sửa chữa chung</option>
-                                    <option>Sửa chữa đồng sơn</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-gray-700 font-semibold mb-1 flex items-center">
-                                    <FaFileInvoiceDollar className="mr-2 text-blue-500" />
-                                    Ghi chú ban đầu:
-                                </label>
-                                <textarea
-                                    name="notes"
-                                    value={formData.notes}
-                                    onChange={handleFormChange}
-                                    rows="4"
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                ></textarea>
-                            </div>
-                            <div className="flex justify-end space-x-4">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsFormOpen(false)}
-                                    className="px-6 py-3 border border-gray-300 text-gray-700 rounded-md font-semibold hover:bg-gray-100 transition"
-                                >
-                                    Hủy
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="px-6 py-3 bg-blue-600 text-white rounded-md font-semibold hover:bg-blue-700 transition"
-                                >
-                                    Lưu thông tin
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+                ...
             )}
+            */}
         </>
     );
 };

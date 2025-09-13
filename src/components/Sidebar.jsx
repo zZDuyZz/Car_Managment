@@ -1,6 +1,7 @@
+// src/components/Sidebar.jsx
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { FaTachometerAlt, FaCar, FaUser, FaTools, FaHistory } from 'react-icons/fa';
+import { FaTachometerAlt, FaCar, FaUser, FaTools, FaHistory, FaFileInvoiceDollar } from 'react-icons/fa';
 
 // Menu dành cho Admin
 const adminMenu = [
@@ -12,7 +13,8 @@ const adminMenu = [
 // Menu dành cho Staff
 const staffMenu = [
     { name: 'Dashboard', path: '/staff/dashboard', icon: FaTachometerAlt },
-    { name: 'Tiếp nhận xe', path: '/staff/reception', icon: FaCar },
+    { name: 'Quản lý tiếp nhận', path: '/staff/reception', icon: FaCar }, // Đổi tên để rõ ràng hơn
+    { name: 'Tạo phiếu sửa chữa', path: '/staff/repair-form', icon: FaTools },
     { name: 'Lịch sử sửa chữa', path: '/staff/history', icon: FaHistory },
 ];
 

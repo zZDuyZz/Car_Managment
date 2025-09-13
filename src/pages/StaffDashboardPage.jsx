@@ -1,9 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { FaCar, FaTools, FaFileInvoiceDollar, FaCheckCircle } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 
 const StaffDashboardPage = () => {
-    // Dữ liệu giả định cho nhân viên
-    const staffData = {
+    // useNavigate để điều hướng
+    const navigate = useNavigate();
+
+    // Dữ liệu giả định cho nhân viên (sẽ được thay thế bằng dữ liệu từ API)
+    const [staffData, setStaffData] = useState({
         pendingTasks: [
             { id: 1, car: '51G-123.45', service: 'Thay dầu động cơ', status: 'Chờ xử lý' },
             { id: 2, car: '29A-678.90', service: 'Sửa hệ thống phanh', status: 'Đang làm' },
@@ -11,11 +15,26 @@ const StaffDashboardPage = () => {
         recentCompleted: [
             { id: 3, car: '30K-111.22', service: 'Bảo dưỡng định kỳ', status: 'Hoàn thành' },
         ],
+    });
+
+    const handleCreateReceptionForm = () => {
+        navigate('/staff/reception-form');
     };
 
     return (
         <>
             <h1 className="text-3xl font-bold text-gray-800 mb-6">Tổng quan công việc</h1>
+
+            {/* Nút tạo phiếu tiếp nhận xe mới */}
+            <div className="flex justify-end mb-6">
+                <button
+                    onClick={handleCreateReceptionForm}
+                    className="flex items-center bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-blue-700 transition"
+                >
+                    <FaFileInvoiceDollar className="mr-2" />
+                    Tạo Phiếu Tiếp nhận xe
+                </button>
+            </div>
 
             {/* Phần các nhiệm vụ đang chờ */}
             <div className="bg-white p-6 rounded-lg shadow-lg mb-8">
@@ -39,9 +58,9 @@ const StaffDashboardPage = () => {
                                 <td className="py-3 px-4 whitespace-nowrap text-sm text-gray-800">{task.car}</td>
                                 <td className="py-3 px-4 text-sm text-gray-800">{task.service}</td>
                                 <td className="py-3 px-4 whitespace-nowrap text-sm">
-                                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${task.status === 'Chờ xử lý' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800'}`}>
-                                            {task.status}
-                                        </span>
+                                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${task.status === 'Chờ xử lý' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800'}`}>
+                                        {task.status}
+                                    </span>
                                 </td>
                                 <td className="py-3 px-4 whitespace-nowrap text-sm text-gray-800">
                                     <button className="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600">Xem chi tiết</button>
@@ -74,9 +93,9 @@ const StaffDashboardPage = () => {
                                 <td className="py-3 px-4 whitespace-nowrap text-sm text-gray-800">{task.car}</td>
                                 <td className="py-3 px-4 text-sm text-gray-800">{task.service}</td>
                                 <td className="py-3 px-4 whitespace-nowrap text-sm">
-                                        <span className="bg-green-100 text-green-800 px-2.5 py-0.5 rounded-full text-xs font-medium">
-                                            {task.status}
-                                        </span>
+                                    <span className="bg-green-100 text-green-800 px-2.5 py-0.5 rounded-full text-xs font-medium">
+                                        {task.status}
+                                    </span>
                                 </td>
                             </tr>
                         ))}
