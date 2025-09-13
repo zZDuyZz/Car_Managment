@@ -4,21 +4,21 @@ import { FaTachometerAlt, FaCar, FaUser, FaTools, FaHistory } from 'react-icons/
 
 // Menu dành cho Admin
 const adminMenu = [
-    { name: 'Dashboard', path: '/dashboard', icon: FaTachometerAlt },
-    { name: 'Tiếp nhận xe', path: '/reception', icon: FaCar },
-    { name: 'Lịch sử sửa chữa', path: '/history', icon: FaHistory },
+    { name: 'Dashboard', path: '/admin/dashboard', icon: FaTachometerAlt },
+    { name: 'Tiếp nhận xe', path: '/admin/reception', icon: FaCar },
+    { name: 'Lịch sử sửa chữa', path: '/admin/history', icon: FaHistory },
 ];
 
 // Menu dành cho Staff
 const staffMenu = [
-    { name: 'Dashboard', path: '/staff-dashboard', icon: FaTachometerAlt },
-    { name: 'Tiếp nhận xe', path: '/reception', icon: FaCar },
-    { name: 'Lịch sử sửa chữa', path: '/history', icon: FaHistory },
+    { name: 'Dashboard', path: '/staff/dashboard', icon: FaTachometerAlt },
+    { name: 'Tiếp nhận xe', path: '/staff/reception', icon: FaCar },
+    { name: 'Lịch sử sửa chữa', path: '/staff/history', icon: FaHistory },
 ];
 
 // Menu dành cho Khách hàng
 const customerMenu = [
-    { name: 'Dashboard', path: '/customer-dashboard', icon: FaTachometerAlt },
+    { name: 'Dashboard', path: '/customer/dashboard', icon: FaTachometerAlt },
 ];
 
 const Sidebar = ({ role }) => {

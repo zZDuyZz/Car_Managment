@@ -1,174 +1,142 @@
-// src/pages/ServiceReceptionPage.jsx
 import React, { useState } from 'react';
-import Sidebar from '../components/Sidebar';
-import Navbar from '../components/Navbar';
-import { FaUser, FaCar, FaPhone, FaMapMarkerAlt, FaRegCalendarAlt } from 'react-icons/fa';
-
-// Dữ liệu giả định cho "Hiệu xe"
-const carBrands = ['Toyota', 'Honda', 'Suzuki', 'Ford', 'BMW', 'Mercedes', 'Audi', 'VinFast', 'Khác'];
+import { FaPlus, FaCar, FaUser, FaClipboardList, FaFileInvoiceDollar, FaRegCalendarAlt } from 'react-icons/fa';
 
 const ServiceReceptionPage = () => {
+    const [isFormOpen, setIsFormOpen] = useState(false);
     const [formData, setFormData] = useState({
-        ownerName: '',
         licensePlate: '',
-        carBrand: '',
-        address: '',
-        phone: '',
-        receptionDate: new Date().toISOString().substring(0, 10), // Ngày hiện tại
+        customerName: '',
+        phoneNumber: '',
+        serviceType: 'Bảo dưỡng định kỳ',
+        notes: ''
     });
 
-    const handleChange = (e) => {
+    const handleFormChange = (e) => {
         const { name, value } = e.target;
-        setFormData({
-            ...formData,
-            [name]: value,
-        });
+        setFormData(prevState => ({
+            ...prevState,
+            [name]: value
+        }));
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        // TODO: Xử lý dữ liệu form tại đây (gửi lên API, lưu vào database)
-        console.log('Thông tin xe đã được tiếp nhận:', formData);
+        console.log('Thông tin tiếp nhận xe:', formData);
         alert('Tiếp nhận xe thành công!');
-        // Reset form
+        // Reset form và đóng form
         setFormData({
-            ownerName: '',
             licensePlate: '',
-            carBrand: '',
-            address: '',
-            phone: '',
-            receptionDate: new Date().toISOString().substring(0, 10),
+            customerName: '',
+            phoneNumber: '',
+            serviceType: 'Bảo dưỡng định kỳ',
+            notes: ''
         });
+        setIsFormOpen(false);
     };
 
     return (
-        <div className="flex min-h-screen bg-gray-100">
-            <Sidebar />
-            <div className="flex-1 flex flex-col">
-                <Navbar />
-                <main className="p-6 md:p-8 flex-1">
-                    <h1 className="text-3xl font-bold text-gray-800 mb-6">Tiếp Nhận Bảo Trì Xe</h1>
+        <>
+            <h1 className="text-3xl font-bold text-gray-800 mb-6">Tiếp nhận xe</h1>
+            <div className="flex justify-end mb-4">
+                <button
+                    onClick={() => setIsFormOpen(true)}
+                    className="bg-blue-600 text-white px-6 py-3 rounded-md font-semibold flex items-center shadow-lg hover:bg-blue-700 transition"
+                >
+                    <FaPlus className="mr-2" />
+                    Thêm xe mới
+                </button>
+            </div>
 
-                    <div className="bg-white p-6 rounded-lg shadow-lg">
-                        <form onSubmit={handleSubmit} className="space-y-6">
-                            {/* Input: Tên chủ xe */}
-                            <div className="flex items-center space-x-4">
-                                <FaUser className="text-gray-500" size={20} />
-                                <div className="flex-1">
-                                    <label htmlFor="ownerName" className="block text-sm font-medium text-gray-700">Tên chủ xe</label>
-                                    <input
-                                        type="text"
-                                        name="ownerName"
-                                        id="ownerName"
-                                        value={formData.ownerName}
-                                        onChange={handleChange}
-                                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                                        required
-                                    />
-                                </div>
+            {isFormOpen && (
+                <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-lg mx-4">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-2xl font-bold text-gray-800">Thông tin tiếp nhận</h2>
+                            <button
+                                onClick={() => setIsFormOpen(false)}
+                                className="text-gray-500 hover:text-gray-800 text-2xl"
+                            >
+                                &times;
+                            </button>
+                        </div>
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-gray-700 font-semibold mb-1 flex items-center">
+                                    <FaCar className="mr-2 text-blue-500" />
+                                    Biển số xe:
+                                </label>
+                                <input
+                                    type="text"
+                                    name="licensePlate"
+                                    value={formData.licensePlate}
+                                    onChange={handleFormChange}
+                                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    required
+                                />
                             </div>
-
-                            {/* Input: Biển số */}
-                            <div className="flex items-center space-x-4">
-                                <FaCar className="text-gray-500" size={20} />
-                                <div className="flex-1">
-                                    <label htmlFor="licensePlate" className="block text-sm font-medium text-gray-700">Biển số</label>
-                                    <input
-                                        type="text"
-                                        name="licensePlate"
-                                        id="licensePlate"
-                                        value={formData.licensePlate}
-                                        onChange={handleChange}
-                                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                                        required
-                                    />
-                                </div>
+                            <div>
+                                <label className="block text-gray-700 font-semibold mb-1 flex items-center">
+                                    <FaUser className="mr-2 text-blue-500" />
+                                    Tên khách hàng:
+                                </label>
+                                <input
+                                    type="text"
+                                    name="customerName"
+                                    value={formData.customerName}
+                                    onChange={handleFormChange}
+                                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    required
+                                />
                             </div>
-
-                            {/* Select: Hiệu xe */}
-                            <div className="flex items-center space-x-4">
-                                <FaCar className="text-gray-500" size={20} />
-                                <div className="flex-1">
-                                    <label htmlFor="carBrand" className="block text-sm font-medium text-gray-700">Hiệu xe</label>
-                                    <select
-                                        name="carBrand"
-                                        id="carBrand"
-                                        value={formData.carBrand}
-                                        onChange={handleChange}
-                                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                                        required
-                                    >
-                                        <option value="">-- Chọn hiệu xe --</option>
-                                        {carBrands.map((brand, index) => (
-                                            <option key={index} value={brand}>{brand}</option>
-                                        ))}
-                                    </select>
-                                </div>
+                            <div>
+                                <label className="block text-gray-700 font-semibold mb-1 flex items-center">
+                                    <FaClipboardList className="mr-2 text-blue-500" />
+                                    Loại dịch vụ:
+                                </label>
+                                <select
+                                    name="serviceType"
+                                    value={formData.serviceType}
+                                    onChange={handleFormChange}
+                                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                    <option>Bảo dưỡng định kỳ</option>
+                                    <option>Sửa chữa chung</option>
+                                    <option>Sửa chữa đồng sơn</option>
+                                </select>
                             </div>
-
-                            {/* Input: Địa chỉ */}
-                            <div className="flex items-center space-x-4">
-                                <FaMapMarkerAlt className="text-gray-500" size={20} />
-                                <div className="flex-1">
-                                    <label htmlFor="address" className="block text-sm font-medium text-gray-700">Địa chỉ</label>
-                                    <input
-                                        type="text"
-                                        name="address"
-                                        id="address"
-                                        value={formData.address}
-                                        onChange={handleChange}
-                                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                                    />
-                                </div>
+                            <div>
+                                <label className="block text-gray-700 font-semibold mb-1 flex items-center">
+                                    <FaFileInvoiceDollar className="mr-2 text-blue-500" />
+                                    Ghi chú ban đầu:
+                                </label>
+                                <textarea
+                                    name="notes"
+                                    value={formData.notes}
+                                    onChange={handleFormChange}
+                                    rows="4"
+                                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                ></textarea>
                             </div>
-
-                            {/* Input: Điện thoại */}
-                            <div className="flex items-center space-x-4">
-                                <FaPhone className="text-gray-500" size={20} />
-                                <div className="flex-1">
-                                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Điện thoại</label>
-                                    <input
-                                        type="tel"
-                                        name="phone"
-                                        id="phone"
-                                        value={formData.phone}
-                                        onChange={handleChange}
-                                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Input: Ngày tiếp nhận */}
-                            <div className="flex items-center space-x-4">
-                                <FaRegCalendarAlt className="text-gray-500" size={20} />
-                                <div className="flex-1">
-                                    <label htmlFor="receptionDate" className="block text-sm font-medium text-gray-700">Ngày tiếp nhận</label>
-                                    <input
-                                        type="date"
-                                        name="receptionDate"
-                                        id="receptionDate"
-                                        value={formData.receptionDate}
-                                        onChange={handleChange}
-                                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="text-center">
+                            <div className="flex justify-end space-x-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsFormOpen(false)}
+                                    className="px-6 py-3 border border-gray-300 text-gray-700 rounded-md font-semibold hover:bg-gray-100 transition"
+                                >
+                                    Hủy
+                                </button>
                                 <button
                                     type="submit"
-                                    className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                    className="px-6 py-3 bg-blue-600 text-white rounded-md font-semibold hover:bg-blue-700 transition"
                                 >
-                                    Tiếp Nhận Xe
+                                    Lưu thông tin
                                 </button>
                             </div>
                         </form>
                     </div>
-                </main>
-            </div>
-        </div>
+                </div>
+            )}
+        </>
     );
 };
 
