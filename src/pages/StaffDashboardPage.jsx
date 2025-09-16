@@ -141,6 +141,10 @@ const StaffDashboardPage = () => {
     const [showModal, setShowModal] = useState(false);
     const [selectedTask, setSelectedTask] = useState(null);
 
+    // Thêm trạng thái cho phân trang
+    const [currentPage, setCurrentPage] = useState(1);
+    const tasksPerPage = 10;
+
     // Dữ liệu giả định cho nhân viên, bổ sung thêm carBrand, carModel, initialDescription
     const [staffData, setStaffData] = useState({
         pendingTasks: [],
@@ -154,48 +158,160 @@ const StaffDashboardPage = () => {
             // Simulate API delay
             await new Promise(resolve => setTimeout(resolve, 1000));
 
+            const dummyData = [
+                {
+                    id: 1,
+                    car: '51G-123.45',
+                    service: 'Thay dầu động cơ',
+                    status: 'Chờ xử lý',
+                    customer: 'Nguyễn Văn A',
+                    phone: '0901234567',
+                    date: '16/09/2025',
+                    carBrand: 'Honda',
+                    carModel: 'City 2023',
+                    initialDescription: 'Xe có tiếng động lạ khi khởi động, cần kiểm tra.'
+                },
+                {
+                    id: 2,
+                    car: '29A-678.90',
+                    service: 'Sửa hệ thống phanh',
+                    status: 'Đang làm',
+                    customer: 'Trần Thị B',
+                    phone: '0912345678',
+                    date: '15/09/2025',
+                    carBrand: 'Toyota',
+                    carModel: 'Vios 2020',
+                    initialDescription: 'Phanh bị kêu, đạp phanh cảm thấy lỏng, cần thay má phanh.'
+                },
+                {
+                    id: 3,
+                    car: '30K-111.22',
+                    service: 'Bảo dưỡng định kỳ',
+                    status: 'Hoàn thành',
+                    customer: 'Lê Văn C',
+                    phone: '0923456789',
+                    date: '14/09/2025',
+                    completedDate: '15/09/2025',
+                    carBrand: 'Hyundai',
+                    carModel: 'Accent 2021',
+                    initialDescription: 'Bảo dưỡng định kỳ 40.000km.'
+                },
+                {
+                    id: 4,
+                    car: '59B-001.01',
+                    service: 'Kiểm tra và sửa chữa điện',
+                    status: 'Chờ xử lý',
+                    customer: 'Phạm Thị D',
+                    phone: '0934567890',
+                    date: '16/09/2025',
+                    carBrand: 'Ford',
+                    carModel: 'Ranger',
+                    initialDescription: 'Hệ thống đèn pha bị chập chờn, cần kiểm tra lại toàn bộ dây điện.'
+                },
+                {
+                    id: 5,
+                    car: '43A-987.65',
+                    service: 'Sơn lại thân xe',
+                    status: 'Đang làm',
+                    customer: 'Hoàng Văn E',
+                    phone: '0945678901',
+                    date: '15/09/2025',
+                    carBrand: 'Mazda',
+                    carModel: 'CX-5',
+                    initialDescription: 'Xe bị va chạm nhẹ ở bên hông, cần sơn lại để phục hồi màu sơn gốc.'
+                },
+                {
+                    id: 6,
+                    car: '60C-222.33',
+                    service: 'Thay lốp và cân mâm bấm chì',
+                    status: 'Hoàn thành',
+                    customer: 'Nguyễn Thị F',
+                    phone: '0956789012',
+                    date: '13/09/2025',
+                    completedDate: '14/09/2025',
+                    carBrand: 'Kia',
+                    carModel: 'Seltos',
+                    initialDescription: 'Lốp xe bị mòn, cần thay lốp mới và cân chỉnh lại.'
+                },
+                {
+                    id: 7,
+                    car: '71G-456.78',
+                    service: 'Vệ sinh nội thất',
+                    status: 'Chờ xử lý',
+                    customer: 'Lê Văn G',
+                    phone: '0967890123',
+                    date: '16/09/2025',
+                    carBrand: 'VinFast',
+                    carModel: 'Fadil',
+                    initialDescription: 'Nội thất bị bám bụi nhiều, cần vệ sinh sạch sẽ.'
+                },
+                {
+                    id: 8,
+                    car: '37B-888.88',
+                    service: 'Kiểm tra hệ thống điều hòa',
+                    status: 'Đang làm',
+                    customer: 'Bùi Thị H',
+                    phone: '0978901234',
+                    date: '15/09/2025',
+                    carBrand: 'Mercedes-Benz',
+                    carModel: 'C200',
+                    initialDescription: 'Điều hòa không lạnh, cần kiểm tra gas và lốc lạnh.'
+                },
+                {
+                    id: 9,
+                    car: '99A-123.45',
+                    service: 'Thay bình ắc quy',
+                    status: 'Hoàn thành',
+                    customer: 'Đinh Văn I',
+                    phone: '0989012345',
+                    date: '12/09/2025',
+                    completedDate: '13/09/2025',
+                    carBrand: 'BMW',
+                    carModel: 'X3',
+                    initialDescription: 'Bình ắc quy bị yếu, không đề nổ được.'
+                },
+                {
+                    id: 10,
+                    car: '12L-345.67',
+                    service: 'Sửa chữa đồng sơn',
+                    status: 'Chờ xử lý',
+                    customer: 'Trần Văn K',
+                    phone: '0990123456',
+                    date: '16/09/2025',
+                    carBrand: 'Lexus',
+                    carModel: 'RX350',
+                    initialDescription: 'Xe bị trầy xước nhiều, cần làm lại đồng sơn.'
+                },
+                {
+                    id: 11,
+                    car: '86C-234.56',
+                    service: 'Bảo dưỡng gầm',
+                    status: 'Đang làm',
+                    customer: 'Võ Thị L',
+                    phone: '0900123456',
+                    date: '15/09/2025',
+                    carBrand: 'Toyota',
+                    carModel: 'Fortuner',
+                    initialDescription: 'Gầm xe có tiếng kêu lạ khi đi qua đường xấu.'
+                },
+                {
+                    id: 12,
+                    car: '29C-345.67',
+                    service: 'Thay bugi và lọc gió',
+                    status: 'Hoàn thành',
+                    customer: 'Đặng Văn M',
+                    phone: '0911234567',
+                    date: '11/09/2025',
+                    completedDate: '12/09/2025',
+                    carBrand: 'Suzuki',
+                    carModel: 'Swift',
+                    initialDescription: 'Bugi và lọc gió lâu ngày chưa thay, xe chạy không bốc.'
+                }
+            ];
+
             setStaffData({
-                pendingTasks: [
-                    {
-                        id: 1,
-                        car: '51G-123.45',
-                        service: 'Thay dầu động cơ',
-                        status: 'Chờ xử lý',
-                        customer: 'Nguyễn Văn A',
-                        phone: '0901234567',
-                        date: '16/09/2025',
-                        carBrand: 'Honda',
-                        carModel: 'City 2023',
-                        initialDescription: 'Xe có tiếng động lạ khi khởi động, cần kiểm tra.'
-                    },
-                    {
-                        id: 2,
-                        car: '29A-678.90',
-                        service: 'Sửa hệ thống phanh',
-                        status: 'Đang làm',
-                        customer: 'Trần Thị B',
-                        phone: '0912345678',
-                        date: '15/09/2025',
-                        carBrand: 'Toyota',
-                        carModel: 'Vios 2020',
-                        initialDescription: 'Phanh bị kêu, đạp phanh cảm thấy lỏng, cần thay má phanh.'
-                    },
-                ],
-                recentCompleted: [
-                    {
-                        id: 3,
-                        car: '30K-111.22',
-                        service: 'Bảo dưỡng định kỳ',
-                        status: 'Hoàn thành',
-                        customer: 'Lê Văn C',
-                        phone: '0923456789',
-                        date: '14/09/2025',
-                        completedDate: '15/09/2025',
-                        carBrand: 'Hyundai',
-                        carModel: 'Accent 2021',
-                        initialDescription: 'Bảo dưỡng định kỳ 40.000km.'
-                    },
-                ],
+                pendingTasks: dummyData.filter(task => task.status !== 'Hoàn thành'),
+                recentCompleted: dummyData.filter(task => task.status === 'Hoàn thành'),
             });
             setIsLoading(false);
         };
@@ -211,16 +327,24 @@ const StaffDashboardPage = () => {
 
     const handleRefresh = () => {
         setIsLoading(true);
+        setCurrentPage(1); // Reset về trang đầu tiên khi làm mới
         // Simulate refresh
         setTimeout(() => setIsLoading(false), 1000);
     };
 
-    const filteredTasks = staffData[activeTab === 'pending' ? 'pendingTasks' : 'recentCompleted']
+    const currentTasks = staffData[activeTab === 'pending' ? 'pendingTasks' : 'recentCompleted'];
+    const filteredTasks = currentTasks
         .filter(task =>
             task.car.toLowerCase().includes(searchTerm.toLowerCase()) ||
             task.service.toLowerCase().includes(searchTerm.toLowerCase()) ||
             (task.customer && task.customer.toLowerCase().includes(searchTerm.toLowerCase()))
         );
+
+    // Tính toán số lượng trang và dữ liệu cho trang hiện tại
+    const totalPages = Math.ceil(filteredTasks.length / tasksPerPage);
+    const indexOfLastTask = currentPage * tasksPerPage;
+    const indexOfFirstTask = indexOfLastTask - tasksPerPage;
+    const tasksToShow = filteredTasks.slice(indexOfFirstTask, indexOfLastTask);
 
     const handleCreateReceptionForm = () => {
         navigate('/staff/reception-form');
@@ -236,6 +360,17 @@ const StaffDashboardPage = () => {
     const handleCloseModal = () => {
         setShowModal(false);
         setSelectedTask(null);
+    };
+
+    // Hàm chuyển trang
+    const handlePageChange = (pageNumber) => {
+        setCurrentPage(pageNumber);
+    };
+
+    // Hàm xử lý khi thay đổi tab
+    const handleTabChange = (tabName) => {
+        setActiveTab(tabName);
+        setCurrentPage(1); // Reset về trang 1 khi đổi tab
     };
 
     return (
@@ -264,7 +399,10 @@ const StaffDashboardPage = () => {
                             placeholder="Tìm kiếm biển số, dịch vụ..."
                             className="pl-10 pr-4 py-2 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
                             value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onChange={(e) => {
+                                setSearchTerm(e.target.value);
+                                setCurrentPage(1); // Reset về trang 1 khi tìm kiếm
+                            }}
                         />
                     </div>
 
@@ -292,7 +430,7 @@ const StaffDashboardPage = () => {
             <div className="mb-6 border-b border-gray-200">
                 <nav className="flex -mb-px">
                     <button
-                        onClick={() => setActiveTab('pending')}
+                        onClick={() => handleTabChange('pending')}
                         className={`py-4 px-6 text-center border-b-2 font-medium text-sm ${activeTab === 'pending'
                             ? 'border-blue-500 text-blue-600'
                             : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
@@ -308,7 +446,7 @@ const StaffDashboardPage = () => {
                         </div>
                     </button>
                     <button
-                        onClick={() => setActiveTab('completed')}
+                        onClick={() => handleTabChange('completed')}
                         className={`py-4 px-6 text-center border-b-2 font-medium text-sm ${activeTab === 'completed'
                             ? 'border-green-500 text-green-600'
                             : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
@@ -347,10 +485,10 @@ const StaffDashboardPage = () => {
                         <tbody className="bg-white divide-y divide-gray-200">
                         {isLoading ? (
                             // Skeleton loading
-                            Array(3).fill(0).map((_, index) => <SkeletonRow key={index} />)
-                        ) : filteredTasks.length > 0 ? (
+                            Array(tasksPerPage).fill(0).map((_, index) => <SkeletonRow key={index} />)
+                        ) : tasksToShow.length > 0 ? (
                             // Actual data
-                            filteredTasks.map((task) => (
+                            tasksToShow.map((task) => (
                                 <tr
                                     key={task.id}
                                     className="transition-colors hover:bg-gray-50 cursor-pointer"
@@ -419,32 +557,54 @@ const StaffDashboardPage = () => {
                 {!isLoading && filteredTasks.length > 0 && (
                     <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
                         <div className="flex-1 flex justify-between sm:hidden">
-                            <button className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                            <button
+                                onClick={() => handlePageChange(currentPage - 1)}
+                                disabled={currentPage === 1}
+                                className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                            >
                                 Trước
                             </button>
-                            <button className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                            <button
+                                onClick={() => handlePageChange(currentPage + 1)}
+                                disabled={currentPage === totalPages}
+                                className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                            >
                                 Tiếp
                             </button>
                         </div>
                         <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                             <div>
                                 <p className="text-sm text-gray-700">
-                                    Hiển thị <span className="font-medium">1</span> đến <span className="font-medium">{filteredTasks.length}</span> trong tổng số{' '}
+                                    Hiển thị <span className="font-medium">{indexOfFirstTask + 1}</span> đến <span className="font-medium">{Math.min(indexOfLastTask, filteredTasks.length)}</span> trong tổng số{' '}
                                     <span className="font-medium">{filteredTasks.length}</span> kết quả
                                 </p>
                             </div>
                             <div>
                                 <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                                    <button className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                    <button
+                                        onClick={() => handlePageChange(currentPage - 1)}
+                                        disabled={currentPage === 1}
+                                        className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
                                         <span className="sr-only">Trước</span>
                                         <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                             <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
                                         </svg>
                                     </button>
-                                    <button className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-blue-600 bg-blue-50">
-                                        1
-                                    </button>
-                                    <button className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                    {Array.from({ length: totalPages }, (_, i) => (
+                                        <button
+                                            key={i + 1}
+                                            onClick={() => handlePageChange(i + 1)}
+                                            className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium ${currentPage === i + 1 ? 'bg-blue-50 text-blue-600' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
+                                        >
+                                            {i + 1}
+                                        </button>
+                                    ))}
+                                    <button
+                                        onClick={() => handlePageChange(currentPage + 1)}
+                                        disabled={currentPage === totalPages}
+                                        className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
                                         <span className="sr-only">Tiếp</span>
                                         <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                             <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
