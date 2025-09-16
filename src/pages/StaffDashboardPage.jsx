@@ -1,110 +1,361 @@
-import React, { useState } from 'react';
-import { FaCar, FaTools, FaFileInvoiceDollar, FaCheckCircle } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { FaCar, FaTools, FaFileInvoiceDollar, FaCheckCircle, FaSearch, FaFilter, FaSync } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
-const StaffDashboardPage = () => {
-    // useNavigate để điều hướng
-    const navigate = useNavigate();
+// Skeleton loading component
+const SkeletonRow = () => (
+  <tr className="animate-pulse">
+    <td className="px-4 py-4"><div className="h-4 bg-gray-200 rounded"></div></td>
+    <td className="px-4 py-4"><div className="h-4 bg-gray-200 rounded"></div></td>
+    <td className="px-4 py-4">
+      <div className="inline-block px-3 py-1 rounded-full bg-gray-200 h-6 w-24"></div>
+    </td>
+    <td className="px-4 py-4">
+      <div className="h-8 bg-gray-200 rounded w-20"></div>
+    </td>
+  </tr>
+);
 
-    // Dữ liệu giả định cho nhân viên (sẽ được thay thế bằng dữ liệu từ API)
-    const [staffData, setStaffData] = useState({
+// Notification component
+const Notification = ({ type, message, onClose }) => (
+  <div className={`fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 flex items-center justify-between min-w-64 ${
+    type === 'success' ? 'bg-green-100 text-green-800' : 
+    type === 'error' ? 'bg-red-100 text-red-800' : 
+    'bg-blue-100 text-blue-800'
+  }`}>
+    <span>{message}</span>
+    <button 
+      onClick={onClose}
+      className="ml-4 text-gray-500 hover:text-gray-700"
+    >
+      &times;
+    </button>
+  </div>
+);
+
+// Status badge component
+const StatusBadge = ({ status }) => {
+  const getStatusStyles = () => {
+    switch(status) {
+      case 'Chờ xử lý':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'Đang làm':
+        return 'bg-blue-100 text-blue-800';
+      case 'Hoàn thành':
+        return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  return (
+    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusStyles()}`}>
+      {status}
+    </span>
+  );
+};
+
+const StaffDashboardPage = () => {
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showNotification, setShowNotification] = useState(false);
+  const [notification, setNotification] = useState({ type: '', message: '' });
+  const [activeTab, setActiveTab] = useState('pending');
+  
+  // Dữ liệu giả định cho nhân viên
+  const [staffData, setStaffData] = useState({
+    pendingTasks: [],
+    recentCompleted: [],
+  });
+
+  // Simulate API call
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setStaffData({
         pendingTasks: [
-            { id: 1, car: '51G-123.45', service: 'Thay dầu động cơ', status: 'Chờ xử lý' },
-            { id: 2, car: '29A-678.90', service: 'Sửa hệ thống phanh', status: 'Đang làm' },
+          { 
+            id: 1, 
+            car: '51G-123.45', 
+            service: 'Thay dầu động cơ', 
+            status: 'Chờ xử lý',
+            customer: 'Nguyễn Văn A',
+            phone: '0901234567',
+            date: '16/09/2025'
+          },
+          { 
+            id: 2, 
+            car: '29A-678.90', 
+            service: 'Sửa hệ thống phanh', 
+            status: 'Đang làm',
+            customer: 'Trần Thị B',
+            phone: '0912345678',
+            date: '15/09/2025'
+          },
         ],
         recentCompleted: [
-            { id: 3, car: '30K-111.22', service: 'Bảo dưỡng định kỳ', status: 'Hoàn thành' },
+          { 
+            id: 3, 
+            car: '30K-111.22', 
+            service: 'Bảo dưỡng định kỳ', 
+            status: 'Hoàn thành',
+            customer: 'Lê Văn C',
+            phone: '0923456789',
+            date: '14/09/2025',
+            completedDate: '15/09/2025'
+          },
         ],
-    });
-
-    const handleCreateReceptionForm = () => {
-        navigate('/staff/reception-form');
+      });
+      setIsLoading(false);
     };
 
-    return (
-        <>
-            <h1 className="text-3xl font-bold text-gray-800 mb-6">Tổng quan công việc</h1>
+    fetchData();
+  }, []);
 
-            {/* Nút tạo phiếu tiếp nhận xe mới */}
-            <div className="flex justify-end mb-6">
-                <button
-                    onClick={handleCreateReceptionForm}
-                    className="flex items-center bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-blue-700 transition"
-                >
-                    <FaFileInvoiceDollar className="mr-2" />
-                    Tạo Phiếu Tiếp nhận xe
-                </button>
-            </div>
+  const showNotificationMessage = (type, message) => {
+    setNotification({ type, message });
+    setShowNotification(true);
+    setTimeout(() => setShowNotification(false), 3000);
+  };
 
-            {/* Phần các nhiệm vụ đang chờ */}
-            <div className="bg-white p-6 rounded-lg shadow-lg mb-8">
-                <h2 className="text-xl font-semibold text-gray-800 flex items-center mb-4">
-                    <FaTools className="text-blue-500 mr-3" />
-                    Nhiệm vụ đang chờ
-                </h2>
-                <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                        <tr>
-                            <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Biển số</th>
-                            <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dịch vụ</th>
-                            <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
-                            <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hành động</th>
-                        </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                        {staffData.pendingTasks.map((task) => (
-                            <tr key={task.id}>
-                                <td className="py-3 px-4 whitespace-nowrap text-sm text-gray-800">{task.car}</td>
-                                <td className="py-3 px-4 text-sm text-gray-800">{task.service}</td>
-                                <td className="py-3 px-4 whitespace-nowrap text-sm">
-                                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${task.status === 'Chờ xử lý' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800'}`}>
-                                        {task.status}
-                                    </span>
-                                </td>
-                                <td className="py-3 px-4 whitespace-nowrap text-sm text-gray-800">
-                                    <button className="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600">Xem chi tiết</button>
-                                </td>
-                            </tr>
-                        ))}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+  const handleRefresh = () => {
+    setIsLoading(true);
+    // Simulate refresh
+    setTimeout(() => setIsLoading(false), 1000);
+  };
 
-            {/* Phần các công việc đã hoàn thành gần đây */}
-            <div className="bg-white p-6 rounded-lg shadow-lg">
-                <h2 className="text-xl font-semibold text-gray-800 flex items-center mb-4">
-                    <FaCheckCircle className="text-green-500 mr-3" />
-                    Đã hoàn thành gần đây
-                </h2>
-                <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                        <tr>
-                            <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Biển số</th>
-                            <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dịch vụ</th>
-                            <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
-                        </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                        {staffData.recentCompleted.map((task) => (
-                            <tr key={task.id}>
-                                <td className="py-3 px-4 whitespace-nowrap text-sm text-gray-800">{task.car}</td>
-                                <td className="py-3 px-4 text-sm text-gray-800">{task.service}</td>
-                                <td className="py-3 px-4 whitespace-nowrap text-sm">
-                                    <span className="bg-green-100 text-green-800 px-2.5 py-0.5 rounded-full text-xs font-medium">
-                                        {task.status}
-                                    </span>
-                                </td>
-                            </tr>
-                        ))}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </>
+  const filteredTasks = staffData[activeTab === 'pending' ? 'pendingTasks' : 'recentCompleted']
+    .filter(task => 
+      task.car.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      task.service.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (task.customer && task.customer.toLowerCase().includes(searchTerm.toLowerCase()))
     );
+
+  const handleCreateReceptionForm = () => {
+    navigate('/staff/reception-form');
+  };
+
+  return (
+    <div className="container mx-auto px-4 py-6">
+      {showNotification && (
+        <Notification 
+          type={notification.type} 
+          message={notification.message} 
+          onClose={() => setShowNotification(false)} 
+        />
+      )}
+      
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4 md:mb-0">Tổng quan công việc</h1>
+        
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="relative flex-1">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <FaSearch className="text-gray-400" />
+            </div>
+            <input
+              type="text"
+              placeholder="Tìm kiếm biển số, dịch vụ..."
+              className="pl-10 pr-4 py-2 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          
+          <button
+            onClick={handleRefresh}
+            className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50 transition-colors"
+            disabled={isLoading}
+          >
+            <FaSync className={`mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            Làm mới
+          </button>
+          
+          <button
+            onClick={handleCreateReceptionForm}
+            className="flex items-center justify-center bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-blue-700 transition-all transform hover:scale-105 active:scale-95"
+          >
+            <FaFileInvoiceDollar className="mr-2" />
+            <span className="hidden sm:inline">Tạo Phiếu Tiếp nhận</span>
+            <span className="sm:hidden">Tạo mới</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="mb-6 border-b border-gray-200">
+        <nav className="flex -mb-px">
+          <button
+            onClick={() => setActiveTab('pending')}
+            className={`py-4 px-6 text-center border-b-2 font-medium text-sm ${activeTab === 'pending' 
+              ? 'border-blue-500 text-blue-600' 
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+          >
+            <div className="flex items-center justify-center">
+              <FaTools className="mr-2" />
+              <span>Nhiệm vụ đang chờ</span>
+              {staffData.pendingTasks.length > 0 && (
+                <span className="ml-2 bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                  {staffData.pendingTasks.length}
+                </span>
+              )}
+            </div>
+          </button>
+          <button
+            onClick={() => setActiveTab('completed')}
+            className={`py-4 px-6 text-center border-b-2 font-medium text-sm ${activeTab === 'completed' 
+              ? 'border-green-500 text-green-600' 
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+          >
+            <div className="flex items-center justify-center">
+              <FaCheckCircle className="mr-2" />
+              <span>Đã hoàn thành</span>
+              {staffData.recentCompleted.length > 0 && (
+                <span className="ml-2 bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                  {staffData.recentCompleted.length}
+                </span>
+              )}
+            </div>
+          </button>
+        </nav>
+      </div>
+
+      {/* Task Table */}
+      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <div className="flex items-center">
+                    Biển số
+                  </div>
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dịch vụ</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Khách hàng</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Hành động</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {isLoading ? (
+                // Skeleton loading
+                Array(3).fill(0).map((_, index) => <SkeletonRow key={index} />)
+              ) : filteredTasks.length > 0 ? (
+                // Actual data
+                filteredTasks.map((task) => (
+                  <tr 
+                    key={task.id} 
+                    className="transition-colors hover:bg-gray-50 cursor-pointer"
+                    onClick={() => showNotificationMessage('info', `Xem chi tiết: ${task.car} - ${task.service}`)}
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{task.car}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{task.service}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{task.customer}</div>
+                      <div className="text-sm text-gray-500">{task.phone}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {task.completedDate ? (
+                        <>
+                          <div>Hoàn thành: {task.completedDate}</div>
+                          <div>Tiếp nhận: {task.date}</div>
+                        </>
+                      ) : (
+                        task.date
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <StatusBadge status={task.status} />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <button 
+                        className="text-blue-600 hover:text-blue-900 mr-4"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          showNotificationMessage('info', `Đang mở chi tiết: ${task.car}`);
+                        }}
+                      >
+                        Xem
+                      </button>
+                      {activeTab === 'pending' && (
+                        <button 
+                          className="text-green-600 hover:text-green-900"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            showNotificationMessage('success', `Đã cập nhật trạng thái cho ${task.car}`);
+                          }}
+                        >
+                          Cập nhật
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                // No results
+                <tr>
+                  <td colSpan="6" className="px-6 py-4 text-center text-sm text-gray-500">
+                    Không có dữ liệu phù hợp
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        
+        {/* Pagination */}
+        {!isLoading && filteredTasks.length > 0 && (
+          <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+            <div className="flex-1 flex justify-between sm:hidden">
+              <button className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                Trước
+              </button>
+              <button className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                Tiếp
+              </button>
+            </div>
+            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm text-gray-700">
+                  Hiển thị <span className="font-medium">1</span> đến <span className="font-medium">{filteredTasks.length}</span> trong tổng số{' '}
+                  <span className="font-medium">{filteredTasks.length}</span> kết quả
+                </p>
+              </div>
+              <div>
+                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                  <button className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    <span className="sr-only">Trước</span>
+                    <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                      <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                  <button className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-blue-600 bg-blue-50">
+                    1
+                  </button>
+                  <button className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    <span className="sr-only">Tiếp</span>
+                    <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                      <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                </nav>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default StaffDashboardPage;
