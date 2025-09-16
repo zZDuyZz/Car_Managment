@@ -1,6 +1,6 @@
 .footer-wave {
     position: relative;
-    width: 100%;
+    width: 120%;
     background-color: #f0f4f8; /* Màu nền footer */
     color: #fff;
     text-align: center;
@@ -12,7 +12,7 @@
     position: absolute;
     top: -1px; /* Đẩy sóng lên để che viền */
     left: 0;
-    width: 100%;
+    width: 120%;
     height: 100px;
     overflow: hidden;
     z-index: 10;
@@ -20,7 +20,7 @@
 
 .waves {
     position: relative;
-    width: 100%;
+    width: 120%;
     height: 100px;
 }
 
@@ -55,10 +55,10 @@
 
 @keyframes move-forever {
     0% {
-        transform: translate3d(-90px, 0, 0);
+        transform: translate3d(-150px, 0, 0);
     }
     100% {
-        transform: translate3d(85px, 0, 0);
+        transform: translate3d(150px, 0, 0);
     }
 }
 

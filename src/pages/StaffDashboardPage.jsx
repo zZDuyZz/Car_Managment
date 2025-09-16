@@ -19,7 +19,7 @@ import {
     FaChevronRight
 } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
-import Footer from '../components/Footer';
+
 
 // Skeleton loading component
 const SkeletonRow = () => (
@@ -316,7 +316,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
             <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                 <div>
                     <p className="text-sm text-gray-700">
-                        Hiển thị <span className="font-medium">{(currentPage - 1) * 8 + 1}</span> đến <span className="font-medium">{Math.min(currentPage * 8, totalPages * 8)}</span> của <span className="font-medium">{totalPages * 8}</span> kết quả
+                        Hiển thị <span className="font-medium">{(currentPage - 1) * 10 + 1}</span> đến <span className="font-medium">{Math.min(currentPage * 10, totalPages * 8)}</span> của <span className="font-medium">{totalPages * 10}</span> kết quả
                     </p>
                 </div>
                 <div>
@@ -381,7 +381,7 @@ const StaffDashboardPage = () => {
     const [taskToUpdate, setTaskToUpdate] = useState(null);
 
     const [currentPage, setCurrentPage] = useState(1);
-    const tasksPerPage = 8; // Changed to 8 per your request
+    const tasksPerPage = 10; // Changed to 10 per your request
 
     const [staffData, setStaffData] = useState({
         pendingTasks: [],
@@ -767,7 +767,7 @@ const StaffDashboardPage = () => {
                     )}
                 </div>
             </div>
-            <Footer />
+
         </div>
     );
 };
