@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaCar, FaTools, FaFileInvoiceDollar, FaCheckCircle, FaSearch, FaFilter, FaSync, FaTimesCircle, FaClock } from 'react-icons/fa';
+import { FaCar, FaTools, FaFileInvoiceDollar, FaCheckCircle, FaSearch, FaFilter, FaSync, FaTimesCircle, FaClock, FaClipboardList } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
 // Skeleton loading component
@@ -223,7 +223,8 @@ const StaffDashboardPage = () => {
     // Dữ liệu giả định cho nhân viên, bổ sung thêm progress
     const [staffData, setStaffData] = useState({
         pendingTasks: [],
-        recentCompleted: [],
+        inProgressTasks: [],
+        completedTasks: [],
     });
 
     // Simulate API call
@@ -396,8 +397,9 @@ const StaffDashboardPage = () => {
             ];
 
             setStaffData({
-                pendingTasks: dummyData.filter(task => task.status !== 'Hoàn thành'),
-                recentCompleted: dummyData.filter(task => task.status === 'Hoàn thành'),
+                pendingTasks: dummyData.filter(task => task.status === 'Chờ xử lý'),
+                inProgressTasks: dummyData.filter(task => task.status === 'Đang làm'),
+                completedTasks: dummyData.filter(task => task.status === 'Hoàn thành'),
             });
             setIsLoading(false);
         };
@@ -418,7 +420,21 @@ const StaffDashboardPage = () => {
         setTimeout(() => setIsLoading(false), 1000);
     };
 
-    const currentTasks = staffData[activeTab === 'pending' ? 'pendingTasks' : 'recentCompleted'];
+    // Xác định danh sách nhiệm vụ hiện tại dựa trên tab
+    const getTasksByTab = () => {
+        switch (activeTab) {
+            case 'pending':
+                return staffData.pendingTasks;
+            case 'in-progress':
+                return staffData.inProgressTasks;
+            case 'completed':
+                return staffData.completedTasks;
+            default:
+                return [];
+        }
+    };
+
+    const currentTasks = getTasksByTab();
     const filteredTasks = currentTasks
         .filter(task =>
             task.car.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -457,33 +473,33 @@ const StaffDashboardPage = () => {
 
     // Hàm xử lý việc cập nhật tiến độ
     const handleUpdateProgress = (newProgressIndex) => {
-        // Cập nhật trạng thái và progress của task
-        const updatedTasks = staffData.pendingTasks.map(task => {
-            if (task.id === taskToUpdate.id) {
-                let newStatus = task.status;
-                const progressSteps = ['Chờ xử lý', 'Đang làm', 'Đang làm', 'Đang làm', 'Hoàn thành'];
-                newStatus = progressSteps[newProgressIndex];
+        const updatedTask = { ...taskToUpdate };
+        const progressSteps = ['Chờ xử lý', 'Đang làm', 'Đang làm', 'Đang làm', 'Hoàn thành'];
+        updatedTask.progress = newProgressIndex;
+        updatedTask.status = progressSteps[newProgressIndex];
 
-                return { ...task, progress: newProgressIndex, status: newStatus };
+        setStaffData(prev => {
+            const newPendingTasks = prev.pendingTasks.filter(t => t.id !== updatedTask.id);
+            const newInProgressTasks = prev.inProgressTasks.filter(t => t.id !== updatedTask.id);
+            const newCompletedTasks = prev.completedTasks.filter(t => t.id !== updatedTask.id);
+
+            if (updatedTask.status === 'Chờ xử lý') {
+                newPendingTasks.push(updatedTask);
+            } else if (updatedTask.status === 'Đang làm') {
+                newInProgressTasks.push(updatedTask);
+            } else if (updatedTask.status === 'Hoàn thành') {
+                newCompletedTasks.push(updatedTask);
+                updatedTask.completedDate = new Date().toLocaleDateString('vi-VN');
             }
-            return task;
+
+            return {
+                pendingTasks: newPendingTasks,
+                inProgressTasks: newInProgressTasks,
+                completedTasks: newCompletedTasks
+            };
         });
 
-        // Di chuyển task đã hoàn thành sang tab "Đã hoàn thành"
-        const completedTask = updatedTasks.find(t => t.id === taskToUpdate.id && t.status === 'Hoàn thành');
-        const updatedPendingTasks = updatedTasks.filter(t => t.id !== taskToUpdate.id || t.status !== 'Hoàn thành');
-
-        if (completedTask) {
-            setStaffData(prev => ({
-                pendingTasks: updatedPendingTasks,
-                recentCompleted: [...prev.recentCompleted, completedTask]
-            }));
-            showNotificationMessage('success', `Đã cập nhật trạng thái Hoàn thành cho ${completedTask.car}`);
-        } else {
-            setStaffData(prev => ({ ...prev, pendingTasks: updatedPendingTasks }));
-            showNotificationMessage('success', `Đã cập nhật tiến độ cho ${taskToUpdate.car}`);
-        }
-
+        showNotificationMessage('success', `Đã cập nhật trạng thái cho xe ${updatedTask.car}`);
         setShowUpdateModal(false);
         setTaskToUpdate(null);
     };
@@ -571,11 +587,27 @@ const StaffDashboardPage = () => {
                             : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
                     >
                         <div className="flex items-center justify-center">
-                            <FaTools className="mr-2" />
+                            <FaClipboardList className="mr-2" />
                             <span>Nhiệm vụ đang chờ</span>
                             {staffData.pendingTasks.length > 0 && (
                                 <span className="ml-2 bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
                                   {staffData.pendingTasks.length}
+                                </span>
+                            )}
+                        </div>
+                    </button>
+                    <button
+                        onClick={() => handleTabChange('in-progress')}
+                        className={`py-4 px-6 text-center border-b-2 font-medium text-sm ${activeTab === 'in-progress'
+                            ? 'border-blue-500 text-blue-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+                    >
+                        <div className="flex items-center justify-center">
+                            <FaTools className="mr-2" />
+                            <span>Nhiệm vụ đang làm</span>
+                            {staffData.inProgressTasks.length > 0 && (
+                                <span className="ml-2 bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                                  {staffData.inProgressTasks.length}
                                 </span>
                             )}
                         </div>
@@ -589,9 +621,9 @@ const StaffDashboardPage = () => {
                         <div className="flex items-center justify-center">
                             <FaCheckCircle className="mr-2" />
                             <span>Đã hoàn thành</span>
-                            {staffData.recentCompleted.length > 0 && (
+                            {staffData.completedTasks.length > 0 && (
                                 <span className="ml-2 bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
-                                  {staffData.recentCompleted.length}
+                                  {staffData.completedTasks.length}
                                 </span>
                             )}
                         </div>
@@ -662,7 +694,7 @@ const StaffDashboardPage = () => {
                                         >
                                             Xem
                                         </button>
-                                        {activeTab === 'pending' && (
+                                        {activeTab !== 'completed' && (
                                             <button
                                                 className="text-green-600 hover:text-green-900"
                                                 onClick={(e) => handleOpenUpdateModal(e, task)}
@@ -694,21 +726,20 @@ const StaffDashboardPage = () => {
                                 disabled={currentPage === 1}
                                 className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
                             >
-                                Trước
+                                Trang trước
                             </button>
                             <button
                                 onClick={() => handlePageChange(currentPage + 1)}
                                 disabled={currentPage === totalPages}
                                 className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
                             >
-                                Tiếp
+                                Trang sau
                             </button>
                         </div>
                         <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                             <div>
                                 <p className="text-sm text-gray-700">
-                                    Hiển thị <span className="font-medium">{indexOfFirstTask + 1}</span> đến <span className="font-medium">{Math.min(indexOfLastTask, filteredTasks.length)}</span> trong tổng số{' '}
-                                    <span className="font-medium">{filteredTasks.length}</span> kết quả
+                                    Hiển thị <span className="font-medium">{indexOfFirstTask + 1}</span> đến <span className="font-medium">{Math.min(indexOfLastTask, filteredTasks.length)}</span> trong tổng số <span className="font-medium">{filteredTasks.length}</span> kết quả
                                 </p>
                             </div>
                             <div>
@@ -716,9 +747,10 @@ const StaffDashboardPage = () => {
                                     <button
                                         onClick={() => handlePageChange(currentPage - 1)}
                                         disabled={currentPage === 1}
-                                        className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
                                     >
-                                        <span className="sr-only">Trước</span>
+                                        <span className="sr-only">Trang trước</span>
+                                        {/* Heroicon name: solid/chevron-left */}
                                         <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                             <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
                                         </svg>
@@ -727,7 +759,12 @@ const StaffDashboardPage = () => {
                                         <button
                                             key={i + 1}
                                             onClick={() => handlePageChange(i + 1)}
-                                            className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium ${currentPage === i + 1 ? 'bg-blue-50 text-blue-600' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
+                                            aria-current={currentPage === i + 1 ? 'page' : undefined}
+                                            className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                                                currentPage === i + 1
+                                                    ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
+                                                    : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                                            }`}
                                         >
                                             {i + 1}
                                         </button>
@@ -735,9 +772,10 @@ const StaffDashboardPage = () => {
                                     <button
                                         onClick={() => handlePageChange(currentPage + 1)}
                                         disabled={currentPage === totalPages}
-                                        className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
                                     >
-                                        <span className="sr-only">Tiếp</span>
+                                        <span className="sr-only">Trang sau</span>
+                                        {/* Heroicon name: solid/chevron-right */}
                                         <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                             <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
                                         </svg>
