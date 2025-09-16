@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaCar, FaTools, FaFileInvoiceDollar, FaCheckCircle, FaSearch, FaFilter, FaSync, FaTimesCircle } from 'react-icons/fa';
+import { FaCar, FaTools, FaFileInvoiceDollar, FaCheckCircle, FaSearch, FaFilter, FaSync, FaTimesCircle, FaClock } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
 // Skeleton loading component
@@ -128,6 +128,77 @@ const Modal = ({ show, onClose, taskDetails }) => {
     );
 };
 
+// Component Modal Cập Nhật Tiến Độ
+const UpdateProgressModal = ({ show, onClose, task, onUpdate }) => {
+    if (!show || !task) return null;
+
+    const progressSteps = [
+        { label: 'Tiếp nhận xe', value: 'Chờ xử lý', icon: FaCheckCircle },
+        { label: 'Kiểm tra & Báo giá', value: 'Đang làm', icon: FaCheckCircle },
+        { label: 'Sửa chữa', value: 'Đang làm', icon: FaTools },
+        { label: 'Kiểm tra cuối cùng', value: 'Đang làm', icon: FaClock },
+        { label: 'Hoàn thành', value: 'Hoàn thành', icon: FaCheckCircle }
+    ];
+
+    const handleUpdateClick = (newProgress) => {
+        onUpdate(newProgress);
+    };
+
+    return (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex justify-center items-center">
+            <div className="relative bg-white rounded-lg shadow-xl w-11/12 md:max-w-md mx-auto p-6 transition-all transform scale-100 opacity-100">
+                <button
+                    onClick={onClose}
+                    className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
+                >
+                    <FaTimesCircle size={24} />
+                </button>
+                <h2 className="text-xl font-bold text-gray-800 mb-4">Cập nhật tiến độ</h2>
+                <hr className="mb-4" />
+
+                <div className="space-y-4">
+                    <p className="text-sm text-gray-600">
+                        Cập nhật tiến độ cho xe **{task.car}** ({task.service})
+                    </p>
+                    <div className="mt-4">
+                        <h3 className="text-md font-semibold mb-2">Chọn trạng thái hiện tại</h3>
+                        <div className="grid grid-cols-1 gap-2">
+                            {progressSteps.map((step, index) => (
+                                <button
+                                    key={index}
+                                    onClick={() => handleUpdateClick(index)}
+                                    className={`
+                                        flex items-center p-3 rounded-lg text-left transition-colors
+                                        ${task.progress === index
+                                        ? 'bg-blue-600 text-white shadow-md'
+                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}
+                                    `}
+                                >
+                                    <span className="flex items-center">
+                                      <step.icon className="mr-3" />
+                                      <span>{step.label}</span>
+                                    </span>
+                                    {task.progress === index && (
+                                        <span className="ml-auto text-sm font-medium">Đang chọn</span>
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="mt-6 flex justify-end">
+                    <button
+                        onClick={onClose}
+                        className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg font-medium hover:bg-gray-300"
+                    >
+                        Hủy
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 const StaffDashboardPage = () => {
     const navigate = useNavigate();
@@ -137,15 +208,19 @@ const StaffDashboardPage = () => {
     const [notification, setNotification] = useState({ type: '', message: '' });
     const [activeTab, setActiveTab] = useState('pending');
 
-    // Trạng thái mới cho Modal
+    // Trạng thái cho modal xem chi tiết
     const [showModal, setShowModal] = useState(false);
     const [selectedTask, setSelectedTask] = useState(null);
+
+    // Trạng thái cho modal cập nhật tiến độ
+    const [showUpdateModal, setShowUpdateModal] = useState(false);
+    const [taskToUpdate, setTaskToUpdate] = useState(null);
 
     // Thêm trạng thái cho phân trang
     const [currentPage, setCurrentPage] = useState(1);
     const tasksPerPage = 10;
 
-    // Dữ liệu giả định cho nhân viên, bổ sung thêm carBrand, carModel, initialDescription
+    // Dữ liệu giả định cho nhân viên, bổ sung thêm progress
     const [staffData, setStaffData] = useState({
         pendingTasks: [],
         recentCompleted: [],
@@ -155,7 +230,6 @@ const StaffDashboardPage = () => {
     useEffect(() => {
         const fetchData = async () => {
             setIsLoading(true);
-            // Simulate API delay
             await new Promise(resolve => setTimeout(resolve, 1000));
 
             const dummyData = [
@@ -169,7 +243,8 @@ const StaffDashboardPage = () => {
                     date: '16/09/2025',
                     carBrand: 'Honda',
                     carModel: 'City 2023',
-                    initialDescription: 'Xe có tiếng động lạ khi khởi động, cần kiểm tra.'
+                    initialDescription: 'Xe có tiếng động lạ khi khởi động, cần kiểm tra.',
+                    progress: 0 // Tiếp nhận xe
                 },
                 {
                     id: 2,
@@ -181,7 +256,8 @@ const StaffDashboardPage = () => {
                     date: '15/09/2025',
                     carBrand: 'Toyota',
                     carModel: 'Vios 2020',
-                    initialDescription: 'Phanh bị kêu, đạp phanh cảm thấy lỏng, cần thay má phanh.'
+                    initialDescription: 'Phanh bị kêu, đạp phanh cảm thấy lỏng, cần thay má phanh.',
+                    progress: 1 // Kiểm tra & Báo giá
                 },
                 {
                     id: 3,
@@ -194,7 +270,8 @@ const StaffDashboardPage = () => {
                     completedDate: '15/09/2025',
                     carBrand: 'Hyundai',
                     carModel: 'Accent 2021',
-                    initialDescription: 'Bảo dưỡng định kỳ 40.000km.'
+                    initialDescription: 'Bảo dưỡng định kỳ 40.000km.',
+                    progress: 4 // Hoàn thành
                 },
                 {
                     id: 4,
@@ -206,7 +283,8 @@ const StaffDashboardPage = () => {
                     date: '16/09/2025',
                     carBrand: 'Ford',
                     carModel: 'Ranger',
-                    initialDescription: 'Hệ thống đèn pha bị chập chờn, cần kiểm tra lại toàn bộ dây điện.'
+                    initialDescription: 'Hệ thống đèn pha bị chập chờn, cần kiểm tra lại toàn bộ dây điện.',
+                    progress: 0
                 },
                 {
                     id: 5,
@@ -218,7 +296,8 @@ const StaffDashboardPage = () => {
                     date: '15/09/2025',
                     carBrand: 'Mazda',
                     carModel: 'CX-5',
-                    initialDescription: 'Xe bị va chạm nhẹ ở bên hông, cần sơn lại để phục hồi màu sơn gốc.'
+                    initialDescription: 'Xe bị va chạm nhẹ ở bên hông, cần sơn lại để phục hồi màu sơn gốc.',
+                    progress: 2 // Sửa chữa
                 },
                 {
                     id: 6,
@@ -231,7 +310,8 @@ const StaffDashboardPage = () => {
                     completedDate: '14/09/2025',
                     carBrand: 'Kia',
                     carModel: 'Seltos',
-                    initialDescription: 'Lốp xe bị mòn, cần thay lốp mới và cân chỉnh lại.'
+                    initialDescription: 'Lốp xe bị mòn, cần thay lốp mới và cân chỉnh lại.',
+                    progress: 4
                 },
                 {
                     id: 7,
@@ -243,7 +323,8 @@ const StaffDashboardPage = () => {
                     date: '16/09/2025',
                     carBrand: 'VinFast',
                     carModel: 'Fadil',
-                    initialDescription: 'Nội thất bị bám bụi nhiều, cần vệ sinh sạch sẽ.'
+                    initialDescription: 'Nội thất bị bám bụi nhiều, cần vệ sinh sạch sẽ.',
+                    progress: 0
                 },
                 {
                     id: 8,
@@ -255,7 +336,8 @@ const StaffDashboardPage = () => {
                     date: '15/09/2025',
                     carBrand: 'Mercedes-Benz',
                     carModel: 'C200',
-                    initialDescription: 'Điều hòa không lạnh, cần kiểm tra gas và lốc lạnh.'
+                    initialDescription: 'Điều hòa không lạnh, cần kiểm tra gas và lốc lạnh.',
+                    progress: 3 // Kiểm tra cuối cùng
                 },
                 {
                     id: 9,
@@ -268,7 +350,8 @@ const StaffDashboardPage = () => {
                     completedDate: '13/09/2025',
                     carBrand: 'BMW',
                     carModel: 'X3',
-                    initialDescription: 'Bình ắc quy bị yếu, không đề nổ được.'
+                    initialDescription: 'Bình ắc quy bị yếu, không đề nổ được.',
+                    progress: 4
                 },
                 {
                     id: 10,
@@ -280,7 +363,8 @@ const StaffDashboardPage = () => {
                     date: '16/09/2025',
                     carBrand: 'Lexus',
                     carModel: 'RX350',
-                    initialDescription: 'Xe bị trầy xước nhiều, cần làm lại đồng sơn.'
+                    initialDescription: 'Xe bị trầy xước nhiều, cần làm lại đồng sơn.',
+                    progress: 0
                 },
                 {
                     id: 11,
@@ -292,7 +376,8 @@ const StaffDashboardPage = () => {
                     date: '15/09/2025',
                     carBrand: 'Toyota',
                     carModel: 'Fortuner',
-                    initialDescription: 'Gầm xe có tiếng kêu lạ khi đi qua đường xấu.'
+                    initialDescription: 'Gầm xe có tiếng kêu lạ khi đi qua đường xấu.',
+                    progress: 2
                 },
                 {
                     id: 12,
@@ -305,7 +390,8 @@ const StaffDashboardPage = () => {
                     completedDate: '12/09/2025',
                     carBrand: 'Suzuki',
                     carModel: 'Swift',
-                    initialDescription: 'Bugi và lọc gió lâu ngày chưa thay, xe chạy không bốc.'
+                    initialDescription: 'Bugi và lọc gió lâu ngày chưa thay, xe chạy không bốc.',
+                    progress: 4
                 }
             ];
 
@@ -350,16 +436,56 @@ const StaffDashboardPage = () => {
         navigate('/staff/reception-form');
     };
 
-    // Hàm mới để xử lý việc mở modal
+    // Hàm mới để xử lý việc mở modal chi tiết
     const handleOpenModal = (task) => {
         setSelectedTask(task);
         setShowModal(true);
     };
 
-    // Hàm mới để xử lý việc đóng modal
+    // Hàm mới để xử lý việc đóng modal chi tiết
     const handleCloseModal = () => {
         setShowModal(false);
         setSelectedTask(null);
+    };
+
+    // Hàm mở modal cập nhật tiến độ
+    const handleOpenUpdateModal = (e, task) => {
+        e.stopPropagation(); // Ngăn sự kiện click vào dòng
+        setTaskToUpdate(task);
+        setShowUpdateModal(true);
+    };
+
+    // Hàm xử lý việc cập nhật tiến độ
+    const handleUpdateProgress = (newProgressIndex) => {
+        // Cập nhật trạng thái và progress của task
+        const updatedTasks = staffData.pendingTasks.map(task => {
+            if (task.id === taskToUpdate.id) {
+                let newStatus = task.status;
+                const progressSteps = ['Chờ xử lý', 'Đang làm', 'Đang làm', 'Đang làm', 'Hoàn thành'];
+                newStatus = progressSteps[newProgressIndex];
+
+                return { ...task, progress: newProgressIndex, status: newStatus };
+            }
+            return task;
+        });
+
+        // Di chuyển task đã hoàn thành sang tab "Đã hoàn thành"
+        const completedTask = updatedTasks.find(t => t.id === taskToUpdate.id && t.status === 'Hoàn thành');
+        const updatedPendingTasks = updatedTasks.filter(t => t.id !== taskToUpdate.id || t.status !== 'Hoàn thành');
+
+        if (completedTask) {
+            setStaffData(prev => ({
+                pendingTasks: updatedPendingTasks,
+                recentCompleted: [...prev.recentCompleted, completedTask]
+            }));
+            showNotificationMessage('success', `Đã cập nhật trạng thái Hoàn thành cho ${completedTask.car}`);
+        } else {
+            setStaffData(prev => ({ ...prev, pendingTasks: updatedPendingTasks }));
+            showNotificationMessage('success', `Đã cập nhật tiến độ cho ${taskToUpdate.car}`);
+        }
+
+        setShowUpdateModal(false);
+        setTaskToUpdate(null);
     };
 
     // Hàm chuyển trang
@@ -370,6 +496,7 @@ const StaffDashboardPage = () => {
     // Hàm xử lý khi thay đổi tab
     const handleTabChange = (tabName) => {
         setActiveTab(tabName);
+        setSearchTerm(''); // Xóa tìm kiếm khi đổi tab
         setCurrentPage(1); // Reset về trang 1 khi đổi tab
     };
 
@@ -383,8 +510,16 @@ const StaffDashboardPage = () => {
                 />
             )}
 
-            {/* Modal component */}
+            {/* Modal xem chi tiết */}
             <Modal show={showModal} onClose={handleCloseModal} taskDetails={selectedTask} />
+
+            {/* Modal cập nhật tiến độ */}
+            <UpdateProgressModal
+                show={showUpdateModal}
+                onClose={() => setShowUpdateModal(false)}
+                task={taskToUpdate}
+                onUpdate={handleUpdateProgress}
+            />
 
             <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
                 <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4 md:mb-0">Tổng quan công việc</h1>
@@ -440,8 +575,8 @@ const StaffDashboardPage = () => {
                             <span>Nhiệm vụ đang chờ</span>
                             {staffData.pendingTasks.length > 0 && (
                                 <span className="ml-2 bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
-                  {staffData.pendingTasks.length}
-                </span>
+                                  {staffData.pendingTasks.length}
+                                </span>
                             )}
                         </div>
                     </button>
@@ -456,8 +591,8 @@ const StaffDashboardPage = () => {
                             <span>Đã hoàn thành</span>
                             {staffData.recentCompleted.length > 0 && (
                                 <span className="ml-2 bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
-                  {staffData.recentCompleted.length}
-                </span>
+                                  {staffData.recentCompleted.length}
+                                </span>
                             )}
                         </div>
                     </button>
@@ -530,10 +665,7 @@ const StaffDashboardPage = () => {
                                         {activeTab === 'pending' && (
                                             <button
                                                 className="text-green-600 hover:text-green-900"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    showNotificationMessage('success', `Đã cập nhật trạng thái cho ${task.car}`);
-                                                }}
+                                                onClick={(e) => handleOpenUpdateModal(e, task)}
                                             >
                                                 Cập nhật
                                             </button>
