@@ -1,0 +1,90 @@
+.footer-wave {
+    position: relative;
+    width: 100%;
+    background-color: #f0f4f8; /* Màu nền footer */
+    color: #fff;
+    text-align: center;
+    padding-top: 100px; /* Khoảng trống cho sóng */
+    overflow: hidden; /* Quan trọng để ẩn phần SVG thừa */
+}
+
+.wave-container {
+    position: absolute;
+    top: -1px; /* Đẩy sóng lên để che viền */
+    left: 0;
+    width: 100%;
+    height: 100px;
+    overflow: hidden;
+    z-index: 10;
+}
+
+.waves {
+    position: relative;
+    width: 100%;
+    height: 100px;
+}
+
+.parallax > use {
+    animation: move-forever 20s cubic-bezier(.55, .5, .45, .5) infinite;
+}
+
+/* Các lớp sóng với màu sắc và tốc độ khác nhau */
+.parallax > use:nth-child(1) {
+    fill: rgba(0, 123, 255, 0.7); /* Xanh dương nhạt */
+    animation-delay: -2s;
+    animation-duration: 10s;
+}
+
+.parallax > use:nth-child(2) {
+    fill: rgba(0, 123, 255, 0.5); /* Xanh dương trung bình */
+    animation-delay: -3s;
+    animation-duration: 12s;
+}
+
+.parallax > use:nth-child(3) {
+    fill: rgba(0, 123, 255, 0.3); /* Xanh dương trong suốt */
+    animation-delay: -4s;
+    animation-duration: 15s;
+}
+
+.parallax > use:nth-child(4) {
+    fill: #fff; /* Sóng trắng */
+    animation-delay: -5s;
+    animation-duration: 20s;
+}
+
+@keyframes move-forever {
+    0% {
+        transform: translate3d(-90px, 0, 0);
+    }
+    100% {
+        transform: translate3d(85px, 0, 0);
+    }
+}
+
+.footer-content {
+    position: relative;
+    z-index: 20;
+    padding: 2rem 1rem;
+    background-image: linear-gradient(to bottom, rgba(0, 123, 255, 0.3) 0%, #007bff 100%);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.social-icons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.social-icons a {
+    color: white;
+    font-size: 1.5rem;
+    transition: transform 0.3s ease;
+}
+
+.social-icons a:hover {
+    transform: scale(1.2);
+}
