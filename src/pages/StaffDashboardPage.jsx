@@ -14,7 +14,9 @@ import {
     FaThumbtack,
     FaHourglassHalf,
     FaRegSmileBeam,
-    FaEye
+    FaEye,
+    FaChevronLeft,
+    FaChevronRight
 } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import Footer from '../components/Footer';
@@ -255,6 +257,115 @@ const UpdateProgressModal = ({ show, onClose, task, onUpdate }) => {
     );
 };
 
+// --- New Pagination Component ---
+const Pagination = ({ currentPage, totalPages, onPageChange }) => {
+    const getPageNumbers = () => {
+        const pages = [];
+        const maxPagesToShow = 5;
+
+        if (totalPages <= maxPagesToShow) {
+            for (let i = 1; i <= totalPages; i++) {
+                pages.push(i);
+            }
+        } else {
+            const startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+            const endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+
+            if (startPage > 1) {
+                pages.push(1);
+                if (startPage > 2) {
+                    pages.push('...');
+                }
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                pages.push(i);
+            }
+
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    pages.push('...');
+                }
+                pages.push(totalPages);
+            }
+        }
+
+        return pages;
+    };
+
+    const pageNumbers = getPageNumbers();
+
+    return (
+        <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+            <div className="flex-1 flex justify-between sm:hidden">
+                <button
+                    onClick={() => onPageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                    <FaChevronLeft className="mr-2 h-4 w-4" /> Trang trước
+                </button>
+                <button
+                    onClick={() => onPageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                    Trang sau <FaChevronRight className="ml-2 h-4 w-4" />
+                </button>
+            </div>
+            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                    <p className="text-sm text-gray-700">
+                        Hiển thị <span className="font-medium">{(currentPage - 1) * 8 + 1}</span> đến <span className="font-medium">{Math.min(currentPage * 8, totalPages * 8)}</span> của <span className="font-medium">{totalPages * 8}</span> kết quả
+                    </p>
+                </div>
+                <div>
+                    <nav className="relative z-0 inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                        <button
+                            onClick={() => onPageChange(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            className={`relative inline-flex items-center rounded-l-md border border-gray-300 bg-white px-2 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50
+                            ${currentPage === 1 ? 'cursor-not-allowed opacity-50' : ''}`}
+                        >
+                            <span className="sr-only">Trang trước</span>
+                            <FaChevronLeft className="h-5 w-5" />
+                        </button>
+                        {pageNumbers.map((page, index) => (
+                            page === '...' ? (
+                                <span key={index} className="relative inline-flex items-center border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700">
+                                    ...
+                                </span>
+                            ) : (
+                                <button
+                                    key={page}
+                                    onClick={() => onPageChange(page)}
+                                    className={`relative inline-flex items-center border border-gray-300 px-4 py-2 text-sm font-medium
+                                    ${currentPage === page
+                                        ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
+                                        : 'bg-white text-gray-700 hover:bg-gray-50'
+                                    }`}
+                                >
+                                    {page}
+                                </button>
+                            )
+                        ))}
+                        <button
+                            onClick={() => onPageChange(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                            className={`relative inline-flex items-center rounded-r-md border border-gray-300 bg-white px-2 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50
+                            ${currentPage === totalPages ? 'cursor-not-allowed opacity-50' : ''}`}
+                        >
+                            <span className="sr-only">Trang sau</span>
+                            <FaChevronRight className="h-5 w-5" />
+                        </button>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    );
+};
+// --- End New Pagination Component ---
+
 const StaffDashboardPage = () => {
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(true);
@@ -270,7 +381,7 @@ const StaffDashboardPage = () => {
     const [taskToUpdate, setTaskToUpdate] = useState(null);
 
     const [currentPage, setCurrentPage] = useState(1);
-    const tasksPerPage = 10;
+    const tasksPerPage = 8; // Changed to 8 per your request
 
     const [staffData, setStaffData] = useState({
         pendingTasks: [],
@@ -284,166 +395,56 @@ const StaffDashboardPage = () => {
             await new Promise(resolve => setTimeout(resolve, 1000));
 
             const dummyData = [
-                {
-                    id: 1,
-                    car: '51G-123.45',
-                    service: 'Thay dầu động cơ',
-                    status: 'Chờ xử lý',
-                    customer: 'Nguyễn Văn A',
-                    phone: '0901234567',
-                    date: '16/09/2025',
-                    carBrand: 'Honda',
-                    carModel: 'City 2023',
-                    initialDescription: 'Xe có tiếng động lạ khi khởi động, cần kiểm tra.',
-                    progress: 0
-                },
-                {
-                    id: 2,
-                    car: '29A-678.90',
-                    service: 'Sửa hệ thống phanh',
-                    status: 'Đang làm',
-                    customer: 'Trần Thị B',
-                    phone: '0912345678',
-                    date: '15/09/2025',
-                    carBrand: 'Toyota',
-                    carModel: 'Vios 2020',
-                    initialDescription: 'Phanh bị kêu, đạp phanh cảm thấy lỏng, cần thay má phanh.',
-                    progress: 1
-                },
-                {
-                    id: 3,
-                    car: '30K-111.22',
-                    service: 'Bảo dưỡng định kỳ',
-                    status: 'Hoàn thành',
-                    customer: 'Lê Văn C',
-                    phone: '0923456789',
-                    date: '14/09/2025',
-                    completedDate: '15/09/2025',
-                    carBrand: 'Hyundai',
-                    carModel: 'Accent 2021',
-                    initialDescription: 'Bảo dưỡng định kỳ 40.000km.',
-                    progress: 4
-                },
-                {
-                    id: 4,
-                    car: '59B-001.01',
-                    service: 'Kiểm tra và sửa chữa điện',
-                    status: 'Chờ xử lý',
-                    customer: 'Phạm Thị D',
-                    phone: '0934567890',
-                    date: '16/09/2025',
-                    carBrand: 'Ford',
-                    carModel: 'Ranger',
-                    initialDescription: 'Hệ thống đèn pha bị chập chờn, cần kiểm tra lại toàn bộ dây điện.',
-                    progress: 0
-                },
-                {
-                    id: 5,
-                    car: '43A-987.65',
-                    service: 'Sơn lại thân xe',
-                    status: 'Đang làm',
-                    customer: 'Hoàng Văn E',
-                    phone: '0945678901',
-                    date: '15/09/2025',
-                    carBrand: 'Mazda',
-                    carModel: 'CX-5',
-                    initialDescription: 'Xe bị va chạm nhẹ ở bên hông, cần sơn lại để phục hồi màu sơn gốc.',
-                    progress: 2
-                },
-                {
-                    id: 6,
-                    car: '60C-222.33',
-                    service: 'Thay lốp và cân mâm bấm chì',
-                    status: 'Hoàn thành',
-                    customer: 'Nguyễn Thị F',
-                    phone: '0956789012',
-                    date: '13/09/2025',
-                    completedDate: '14/09/2025',
-                    carBrand: 'Kia',
-                    carModel: 'Seltos',
-                    initialDescription: 'Lốp xe bị mòn, cần thay lốp mới và cân chỉnh lại.',
-                    progress: 4
-                },
-                {
-                    id: 7,
-                    car: '71G-456.78',
-                    service: 'Vệ sinh nội thất',
-                    status: 'Chờ xử lý',
-                    customer: 'Lê Văn G',
-                    phone: '0967890123',
-                    date: '16/09/2025',
-                    carBrand: 'VinFast',
-                    carModel: 'Fadil',
-                    initialDescription: 'Nội thất bị bám bụi nhiều, cần vệ sinh sạch sẽ.',
-                    progress: 0
-                },
-                {
-                    id: 8,
-                    car: '37B-888.88',
-                    service: 'Kiểm tra hệ thống điều hòa',
-                    status: 'Đang làm',
-                    customer: 'Bùi Thị H',
-                    phone: '0978901234',
-                    date: '15/09/2025',
-                    carBrand: 'Mercedes-Benz',
-                    carModel: 'C200',
-                    initialDescription: 'Điều hòa không lạnh, cần kiểm tra gas và lốc lạnh.',
-                    progress: 3
-                },
-                {
-                    id: 9,
-                    car: '99A-123.45',
-                    service: 'Thay bình ắc quy',
-                    status: 'Hoàn thành',
-                    customer: 'Đinh Văn I',
-                    phone: '0989012345',
-                    date: '12/09/2025',
-                    completedDate: '13/09/2025',
-                    carBrand: 'BMW',
-                    carModel: 'X3',
-                    initialDescription: 'Bình ắc quy bị yếu, không đề nổ được.',
-                    progress: 4
-                },
-                {
-                    id: 10,
-                    car: '12L-345.67',
-                    service: 'Sửa chữa đồng sơn',
-                    status: 'Chờ xử lý',
-                    customer: 'Trần Văn K',
-                    phone: '0990123456',
-                    date: '16/09/2025',
-                    carBrand: 'Lexus',
-                    carModel: 'RX350',
-                    initialDescription: 'Xe bị trầy xước nhiều, cần làm lại đồng sơn.',
-                    progress: 0
-                },
-                {
-                    id: 11,
-                    car: '86C-234.56',
-                    service: 'Bảo dưỡng gầm',
-                    status: 'Đang làm',
-                    customer: 'Võ Thị L',
-                    phone: '0900123456',
-                    date: '15/09/2025',
-                    carBrand: 'Toyota',
-                    carModel: 'Fortuner',
-                    initialDescription: 'Gầm xe có tiếng kêu lạ khi đi qua đường xấu.',
-                    progress: 2
-                },
-                {
-                    id: 12,
-                    car: '29C-345.67',
-                    service: 'Thay bugi và lọc gió',
-                    status: 'Hoàn thành',
-                    customer: 'Đặng Văn M',
-                    phone: '0911234567',
-                    date: '11/09/2025',
-                    completedDate: '12/09/2025',
-                    carBrand: 'Suzuki',
-                    carModel: 'Swift',
-                    initialDescription: 'Bugi và lọc gió lâu ngày chưa thay, xe chạy không bốc.',
-                    progress: 4
-                }
+                // 15 pending tasks
+                { id: 1, car: '51G-123.45', service: 'Thay dầu động cơ', status: 'Chờ xử lý', customer: 'Nguyễn Văn A', phone: '0901234567', date: '16/09/2025', carBrand: 'Honda', carModel: 'City 2023', initialDescription: 'Xe có tiếng động lạ khi khởi động.', progress: 0 },
+                { id: 2, car: '29A-678.90', service: 'Sửa hệ thống phanh', status: 'Chờ xử lý', customer: 'Trần Thị B', phone: '0912345678', date: '16/09/2025', carBrand: 'Toyota', carModel: 'Vios 2020', initialDescription: 'Phanh bị kêu, đạp phanh cảm thấy lỏng.', progress: 0 },
+                { id: 3, car: '30K-111.22', service: 'Bảo dưỡng định kỳ', status: 'Chờ xử lý', customer: 'Lê Văn C', phone: '0923456789', date: '16/09/2025', carBrand: 'Hyundai', carModel: 'Accent 2021', initialDescription: 'Bảo dưỡng định kỳ 40.000km.', progress: 0 },
+                { id: 4, car: '59B-001.01', service: 'Kiểm tra và sửa chữa điện', status: 'Chờ xử lý', customer: 'Phạm Thị D', phone: '0934567890', date: '16/09/2025', carBrand: 'Ford', carModel: 'Ranger', initialDescription: 'Hệ thống đèn pha bị chập chờn.', progress: 0 },
+                { id: 5, car: '43A-987.65', service: 'Sơn lại thân xe', status: 'Chờ xử lý', customer: 'Hoàng Văn E', phone: '0945678901', date: '16/09/2025', carBrand: 'Mazda', carModel: 'CX-5', initialDescription: 'Xe bị va chạm nhẹ ở bên hông.', progress: 0 },
+                { id: 6, car: '60C-222.33', service: 'Thay lốp và cân mâm bấm chì', status: 'Chờ xử lý', customer: 'Nguyễn Thị F', phone: '0956789012', date: '16/09/2025', carBrand: 'Kia', carModel: 'Seltos', initialDescription: 'Lốp xe bị mòn, cần thay lốp mới.', progress: 0 },
+                { id: 7, car: '71G-456.78', service: 'Vệ sinh nội thất', status: 'Chờ xử lý', customer: 'Lê Văn G', phone: '0967890123', date: '16/09/2025', carBrand: 'VinFast', carModel: 'Fadil', initialDescription: 'Nội thất bị bám bụi nhiều.', progress: 0 },
+                { id: 8, car: '37B-888.88', service: 'Kiểm tra hệ thống điều hòa', status: 'Chờ xử lý', customer: 'Bùi Thị H', phone: '0978901234', date: '16/09/2025', carBrand: 'Mercedes-Benz', carModel: 'C200', initialDescription: 'Điều hòa không lạnh, cần kiểm tra gas.', progress: 0 },
+                { id: 9, car: '99A-123.45', service: 'Thay bình ắc quy', status: 'Chờ xử lý', customer: 'Đinh Văn I', phone: '0989012345', date: '16/09/2025', carBrand: 'BMW', carModel: 'X3', initialDescription: 'Bình ắc quy bị yếu, không đề nổ được.', progress: 0 },
+                { id: 10, car: '12L-345.67', service: 'Sửa chữa đồng sơn', status: 'Chờ xử lý', customer: 'Trần Văn K', phone: '0990123456', date: '16/09/2025', carBrand: 'Lexus', carModel: 'RX350', initialDescription: 'Xe bị trầy xước nhiều.', progress: 0 },
+                { id: 11, car: '86C-234.56', service: 'Bảo dưỡng gầm', status: 'Chờ xử lý', customer: 'Võ Thị L', phone: '0900123456', date: '16/09/2025', carBrand: 'Toyota', carModel: 'Fortuner', initialDescription: 'Gầm xe có tiếng kêu lạ.', progress: 0 },
+                { id: 12, car: '29C-345.67', service: 'Thay bugi và lọc gió', status: 'Chờ xử lý', customer: 'Đặng Văn M', phone: '0911234567', date: '16/09/2025', carBrand: 'Suzuki', carModel: 'Swift', initialDescription: 'Bugi và lọc gió lâu ngày chưa thay.', progress: 0 },
+                { id: 13, car: '77G-555.55', service: 'Kiểm tra hệ thống phanh', status: 'Chờ xử lý', customer: 'Phan Văn N', phone: '0922334455', date: '16/09/2025', carBrand: 'Honda', carModel: 'CR-V', initialDescription: 'Phanh sau bị kêu khi đi đường ướt.', progress: 0 },
+                { id: 14, car: '55E-789.01', service: 'Vệ sinh khoang máy', status: 'Chờ xử lý', customer: 'Hồ Thị O', phone: '0933445566', date: '16/09/2025', carBrand: 'Mitsubishi', carModel: 'Outlander', initialDescription: 'Khoang máy bị bám bụi bẩn, cần vệ sinh.', progress: 0 },
+                { id: 15, car: '34D-123.45', service: 'Sơn dặm lại cản trước', status: 'Chờ xử lý', customer: 'Ngô Văn P', phone: '0944556677', date: '16/09/2025', carBrand: 'Hyundai', carModel: 'Tucson', initialDescription: 'Cản trước bị trầy nhẹ, cần sơn dặm.', progress: 0 },
+
+                // 15 in progress tasks
+                { id: 16, car: '51C-678.90', service: 'Sửa chữa hệ thống treo', status: 'Đang làm', customer: 'Nguyễn Văn Q', phone: '0955667788', date: '15/09/2025', carBrand: 'Ford', carModel: 'Everest', initialDescription: 'Hệ thống treo phát ra tiếng kêu.', progress: 1 },
+                { id: 17, car: '29C-111.22', service: 'Thay kính chắn gió', status: 'Đang làm', customer: 'Phạm Thị R', phone: '0966778899', date: '15/09/2025', carBrand: 'Toyota', carModel: 'Camry', initialDescription: 'Kính chắn gió bị nứt.', progress: 1 },
+                { id: 18, car: '30F-999.88', service: 'Bảo dưỡng phanh đĩa', status: 'Đang làm', customer: 'Lê Văn S', phone: '0977889900', date: '15/09/2025', carBrand: 'Honda', carModel: 'Civic', initialDescription: 'Đạp phanh có cảm giác nặng.', progress: 2 },
+                { id: 19, car: '59G-765.43', service: 'Sửa chữa hệ thống lái', status: 'Đang làm', customer: 'Hoàng Văn T', phone: '0988990011', date: '15/09/2025', carBrand: 'Kia', carModel: 'Sorento', initialDescription: 'Vô lăng bị lệch, lái không thẳng.', progress: 2 },
+                { id: 20, car: '43H-234.56', service: 'Thay nhớt hộp số', status: 'Đang làm', customer: 'Nguyễn Thị U', phone: '0999001122', date: '15/09/2025', carBrand: 'Mazda', carModel: 'Mazda 6', initialDescription: 'Chưa thay nhớt hộp số sau 80.000km.', progress: 1 },
+                { id: 21, car: '60I-456.78', service: 'Kiểm tra hệ thống đèn', status: 'Đang làm', customer: 'Trần Văn V', phone: '0900112233', date: '15/09/2025', carBrand: 'VinFast', carModel: 'Lux A', initialDescription: 'Đèn hậu bên trái không sáng.', progress: 3 },
+                { id: 22, car: '71J-876.54', service: 'Sửa chữa hệ thống làm mát', status: 'Đang làm', customer: 'Lê Thị W', phone: '0911223344', date: '15/09/2025', carBrand: 'Toyota', carModel: 'Corolla Cross', initialDescription: 'Xe báo nhiệt độ cao.', progress: 2 },
+                { id: 23, car: '37K-987.65', service: 'Đại tu động cơ', status: 'Đang làm', customer: 'Bùi Văn X', phone: '0922334455', date: '15/09/2025', carBrand: 'Mercedes-Benz', carModel: 'E300', initialDescription: 'Động cơ có tiếng gõ lớn, hao nhớt.', progress: 3 },
+                { id: 24, car: '99L-345.67', service: 'Sơn lại toàn bộ xe', status: 'Đang làm', customer: 'Đinh Thị Y', phone: '0933445566', date: '15/09/2025', carBrand: 'Audi', carModel: 'Q5', initialDescription: 'Màu sơn bị phai và có nhiều vết xước.', progress: 1 },
+                { id: 25, car: '12M-789.01', service: 'Kiểm tra và thay thế lọc nhiên liệu', status: 'Đang làm', customer: 'Trần Văn Z', phone: '0944556677', date: '15/09/2025', carBrand: 'Hyundai', carModel: 'Santa Fe', initialDescription: 'Xe bị giật khi tăng tốc.', progress: 1 },
+                { id: 26, car: '86N-567.89', service: 'Bảo dưỡng hộp số tự động', status: 'Đang làm', customer: 'Võ Thị A1', phone: '0955667788', date: '15/09/2025', carBrand: 'BMW', carModel: 'X5', initialDescription: 'Hộp số chuyển số không mượt.', progress: 2 },
+                { id: 27, car: '29O-234.56', service: 'Sửa chữa hệ thống âm thanh', status: 'Đang làm', customer: 'Đặng Văn B1', phone: '0966778899', date: '15/09/2025', carBrand: 'Lexus', carModel: 'RX300', initialDescription: 'Loa bị rè, hệ thống âm thanh bị lỗi.', progress: 3 },
+                { id: 28, car: '77P-890.12', service: 'Vệ sinh kim phun, buồng đốt', status: 'Đang làm', customer: 'Nguyễn Văn C1', phone: '0977889900', date: '15/09/2025', carBrand: 'Nissan', carModel: 'X-Trail', initialDescription: 'Xe yếu, tốn xăng.', progress: 1 },
+                { id: 29, car: '55Q-345.67', service: 'Thay thế lọc gió động cơ', status: 'Đang làm', customer: 'Hồ Thị D1', phone: '0988990011', date: '15/09/2025', carBrand: 'Subaru', carModel: 'Forester', initialDescription: 'Lọc gió quá bẩn, ảnh hưởng hiệu suất.', progress: 1 },
+                { id: 30, car: '34R-567.89', service: 'Căn chỉnh thước lái', status: 'Đang làm', customer: 'Ngô Văn E1', phone: '0999001122', date: '15/09/2025', carBrand: 'Ford', carModel: 'Ranger Raptor', initialDescription: 'Xe bị nhao lái sang một bên.', progress: 2 },
+
+                // 15 completed tasks
+                { id: 31, car: '51S-000.11', service: 'Thay bugi và lọc gió', status: 'Hoàn thành', customer: 'Phạm Văn F1', phone: '0901234567', date: '14/09/2025', completedDate: '15/09/2025', carBrand: 'Honda', carModel: 'City 2023', initialDescription: 'Bugi và lọc gió lâu ngày chưa thay.', progress: 4 },
+                { id: 32, car: '29T-111.22', service: 'Bảo dưỡng định kỳ', status: 'Hoàn thành', customer: 'Trần Thị G1', phone: '0912345678', date: '14/09/2025', completedDate: '15/09/2025', carBrand: 'Toyota', carModel: 'Vios 2020', initialDescription: 'Bảo dưỡng định kỳ 40.000km.', progress: 4 },
+                { id: 33, car: '30U-222.33', service: 'Sửa chữa hệ thống phanh', status: 'Hoàn thành', customer: 'Lê Văn H1', phone: '0923456789', date: '14/09/2025', completedDate: '15/09/2025', carBrand: 'Hyundai', carModel: 'Accent 2021', initialDescription: 'Phanh bị kêu, đạp phanh lỏng.', progress: 4 },
+                { id: 34, car: '59V-333.44', service: 'Kiểm tra và sửa chữa điện', status: 'Hoàn thành', customer: 'Phạm Thị I1', phone: '0934567890', date: '14/09/2025', completedDate: '15/09/2025', carBrand: 'Ford', carModel: 'Ranger', initialDescription: 'Hệ thống đèn pha bị chập chờn.', progress: 4 },
+                { id: 35, car: '43W-444.55', service: 'Sơn lại thân xe', status: 'Hoàn thành', customer: 'Hoàng Văn K1', phone: '0945678901', date: '14/09/2025', completedDate: '15/09/2025', carBrand: 'Mazda', carModel: 'CX-5', initialDescription: 'Xe bị va chạm nhẹ ở bên hông.', progress: 4 },
+                { id: 36, car: '60X-555.66', service: 'Thay lốp và cân mâm bấm chì', status: 'Hoàn thành', customer: 'Nguyễn Thị L1', phone: '0956789012', date: '14/09/2025', completedDate: '15/09/2025', carBrand: 'Kia', carModel: 'Seltos', initialDescription: 'Lốp xe bị mòn, cần thay lốp mới.', progress: 4 },
+                { id: 37, car: '71Y-666.77', service: 'Vệ sinh nội thất', status: 'Hoàn thành', customer: 'Lê Văn M1', phone: '0967890123', date: '14/09/2025', completedDate: '15/09/2025', carBrand: 'VinFast', carModel: 'Fadil', initialDescription: 'Nội thất bị bám bụi nhiều.', progress: 4 },
+                { id: 38, car: '37Z-777.88', service: 'Kiểm tra hệ thống điều hòa', status: 'Hoàn thành', customer: 'Bùi Thị N1', phone: '0978901234', date: '14/09/2025', completedDate: '15/09/2025', carBrand: 'Mercedes-Benz', carModel: 'C200', initialDescription: 'Điều hòa không lạnh, cần kiểm tra gas.', progress: 4 },
+                { id: 39, car: '99AA-888.99', service: 'Thay bình ắc quy', status: 'Hoàn thành', customer: 'Đinh Văn O1', phone: '0989012345', date: '13/09/2025', completedDate: '14/09/2025', carBrand: 'BMW', carModel: 'X3', initialDescription: 'Bình ắc quy bị yếu, không đề nổ được.', progress: 4 },
+                { id: 40, car: '12BB-999.00', service: 'Sửa chữa đồng sơn', status: 'Hoàn thành', customer: 'Trần Văn P1', phone: '0990123456', date: '13/09/2025', completedDate: '14/09/2025', carBrand: 'Lexus', carModel: 'RX350', initialDescription: 'Xe bị trầy xước nhiều.', progress: 4 },
+                { id: 41, car: '86CC-000.11', service: 'Bảo dưỡng gầm', status: 'Hoàn thành', customer: 'Võ Thị Q1', phone: '0900123456', date: '13/09/2025', completedDate: '14/09/2025', carBrand: 'Toyota', carModel: 'Fortuner', initialDescription: 'Gầm xe có tiếng kêu lạ.', progress: 4 },
+                { id: 42, car: '29DD-111.22', service: 'Kiểm tra và thay thế lọc gió', status: 'Hoàn thành', customer: 'Đặng Văn R1', phone: '0911234567', date: '12/09/2025', completedDate: '13/09/2025', carBrand: 'Suzuki', carModel: 'Swift', initialDescription: 'Lọc gió quá bẩn.', progress: 4 },
+                { id: 43, car: '77EE-222.33', service: 'Thay dầu hộp số', status: 'Hoàn thành', customer: 'Nguyễn Văn S1', phone: '0922334455', date: '12/09/2025', completedDate: '13/09/2025', carBrand: 'Honda', carModel: 'CR-V', initialDescription: 'Chưa thay dầu hộp số.', progress: 4 },
+                { id: 44, car: '55FF-333.44', service: 'Vệ sinh nội thất và ngoại thất', status: 'Hoàn thành', customer: 'Hồ Thị T1', phone: '0933445566', date: '12/09/2025', completedDate: '13/09/2025', carBrand: 'Mitsubishi', carModel: 'Outlander', initialDescription: 'Cần làm sạch toàn bộ xe.', progress: 4 },
+                { id: 45, car: '34GG-444.55', service: 'Sửa chữa hệ thống âm thanh', status: 'Hoàn thành', customer: 'Ngô Văn U1', phone: '0944556677', date: '12/09/2025', completedDate: '13/09/2025', carBrand: 'Hyundai', carModel: 'Tucson', initialDescription: 'Âm thanh bị rè, không rõ tiếng.', progress: 4 }
             ];
 
             setStaffData({
@@ -704,122 +705,67 @@ const StaffDashboardPage = () => {
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dịch vụ</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Khách hàng</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Hành động</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày tiếp nhận</th>
+                                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Hành động</th>
                             </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
                             {isLoading ? (
-                                Array(tasksPerPage).fill(0).map((_, index) => <SkeletonRow key={index} />)
+                                Array.from({ length: tasksPerPage }).map((_, index) => (
+                                    <SkeletonRow key={index} />
+                                ))
                             ) : tasksToShow.length > 0 ? (
                                 tasksToShow.map((task) => (
-                                    <tr
-                                        key={task.id}
-                                        className="hover:bg-gray-50 transition-colors cursor-pointer"
-                                        onClick={() => handleOpenModal(task)}
-                                    >
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex items-center">
-                                                <div className="flex-shrink-0 h-10 w-10 bg-gray-100 rounded-full flex items-center justify-center">
-                                                    <FaCar className="text-gray-500" />
-                                                </div>
-                                                <div className="ml-4">
-                                                    <div className="text-sm font-medium text-gray-900">{task.car}</div>
-                                                    <div className="text-sm text-gray-500">{task.carBrand}</div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm text-gray-900">{task.service}</div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm text-gray-900">{task.customer}</div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm text-gray-500">
-                                                {activeTab === 'completed' ? `Hoàn thành: ${task.completedDate}` : `Tiếp nhận: ${task.date}`}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
+                                    <tr key={task.id} className="hover:bg-gray-50 transition-colors">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{task.car}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{task.service}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{task.customer}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm">
                                             <StatusBadge status={task.status} />
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                                            {/* Nút Xem đã được thêm lại */}
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{task.date}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium space-x-2">
                                             <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation(); // Ngăn sự kiện click lan truyền lên hàng
-                                                    handleOpenModal(task);
-                                                }}
-                                                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 transition-colors"
+                                                onClick={() => handleOpenModal(task)}
+                                                className="text-blue-600 hover:text-blue-900 p-2 rounded-full hover:bg-gray-200 transition-colors"
+                                                title="Xem chi tiết"
                                             >
-                                                <FaEye className="mr-2" />
-                                                Xem
+                                                <FaEye />
                                             </button>
-
-                                            {activeTab !== 'completed' && (
-                                                <button
-                                                    onClick={(e) => handleOpenUpdateModal(e, task)}
-                                                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                                                >
-                                                    <FaSync className="mr-2" />
-                                                    Cập nhật
-                                                </button>
-                                            )}
+                                            <button
+                                                onClick={(e) => handleOpenUpdateModal(e, task)}
+                                                className="text-purple-600 hover:text-purple-900 p-2 rounded-full hover:bg-gray-200 transition-colors"
+                                                title="Cập nhật tiến độ"
+                                            >
+                                                <FaSync />
+                                            </button>
                                         </td>
                                     </tr>
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan="6" className="px-6 py-10 text-center text-gray-500">
-                                        <FaRegSmileBeam className="mx-auto text-4xl mb-3 text-gray-400" />
-                                        <p>Không có nhiệm vụ nào trong mục này.</p>
+                                    <td colSpan="6" className="px-6 py-12 text-center text-gray-500">
+                                        <div className="flex flex-col items-center">
+                                            <FaRegSmileBeam className="h-12 w-12 text-gray-400 mb-4" />
+                                            <p className="font-semibold text-lg">Không tìm thấy công việc nào.</p>
+                                            <p className="mt-1 text-sm text-gray-500">Hãy thử tìm kiếm với từ khóa khác hoặc tạo một phiếu tiếp nhận mới.</p>
+                                        </div>
                                     </td>
                                 </tr>
                             )}
                             </tbody>
                         </table>
                     </div>
+                    {/* Pagination component */}
+                    {filteredTasks.length > tasksPerPage && (
+                        <Pagination
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            onPageChange={handlePageChange}
+                        />
+                    )}
                 </div>
-
-                {totalPages > 1 && (
-                    <div className="flex justify-center mt-6">
-                        <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                            <button
-                                onClick={() => handlePageChange(currentPage - 1)}
-                                disabled={currentPage === 1}
-                                className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <span className="sr-only">Previous</span>
-                                <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-                                </svg>
-                            </button>
-                            {Array.from({ length: totalPages }, (_, i) => (
-                                <button
-                                    key={i + 1}
-                                    onClick={() => handlePageChange(i + 1)}
-                                    className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${currentPage === i + 1
-                                        ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
-                                        : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                                    }`}
-                                >
-                                    {i + 1}
-                                </button>
-                            ))}
-                            <button
-                                onClick={() => handlePageChange(currentPage + 1)}
-                                disabled={currentPage === totalPages}
-                                className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <span className="sr-only">Next</span>
-                                <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                                </svg>
-                            </button>
-                        </nav>
-                    </div>
-                )}
             </div>
             <Footer />
         </div>
