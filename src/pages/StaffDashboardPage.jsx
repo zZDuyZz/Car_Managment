@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
     FaCar,
     FaTools,
@@ -16,26 +16,32 @@ import {
     FaRegSmileBeam,
     FaEye,
     FaChevronLeft,
-    FaChevronRight
+    FaChevronRight,
+    FaPlusCircle // Thêm icon cho chức năng tạo mới
 } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
+// Định nghĩa màu sắc và hằng số
+const PRIMARY_COLOR = 'indigo'; // Tailwind: indigo-600
+const PRIMARY_BG = 'indigo-50'; // Tailwind: indigo-50
+const BORDER_COLOR = 'indigo-200'; // Tailwind: indigo-200
 
-// Skeleton loading component
+// --- Component SkeletonRow (Giữ nguyên) ---
 const SkeletonRow = () => (
-    <tr className="animate-pulse">
+    <tr className="animate-pulse border-b border-gray-100">
         <td className="px-4 py-4"><div className="h-4 bg-gray-200 rounded"></div></td>
         <td className="px-4 py-4"><div className="h-4 bg-gray-200 rounded"></div></td>
         <td className="px-4 py-4">
             <div className="inline-block px-3 py-1 rounded-full bg-gray-200 h-6 w-24"></div>
         </td>
+        <td className="px-4 py-4"><div className="h-4 bg-gray-200 rounded"></div></td>
         <td className="px-4 py-4">
             <div className="h-8 bg-gray-200 rounded w-20"></div>
         </td>
     </tr>
 );
 
-// Notification component
+// --- Component Notification (Điều chỉnh màu) ---
 const Notification = ({ type, message, onClose }) => {
     const getNotificationStyles = () => {
         switch(type) {
@@ -44,7 +50,8 @@ const Notification = ({ type, message, onClose }) => {
             case 'error':
                 return 'bg-red-100 text-red-800 border-l-4 border-red-500';
             case 'info':
-                return 'bg-blue-100 text-blue-800 border-l-4 border-blue-500';
+                // Sử dụng màu chủ đạo mới
+                return `bg-${PRIMARY_BG} text-${PRIMARY_COLOR}-800 border-l-4 border-${PRIMARY_COLOR}-500`;
             default:
                 return 'bg-gray-100 text-gray-800 border-l-4 border-gray-400';
         }
@@ -57,7 +64,7 @@ const Notification = ({ type, message, onClose }) => {
             case 'error':
                 return <FaExclamationTriangle className="text-red-500 mr-3" size={20} />;
             case 'info':
-                return <FaInfoCircle className="text-blue-500 mr-3" size={20} />;
+                return <FaInfoCircle className={`text-${PRIMARY_COLOR}-500 mr-3`} size={20} />;
             default:
                 return null;
         }
@@ -79,91 +86,95 @@ const Notification = ({ type, message, onClose }) => {
     );
 };
 
-// Status badge component
+// --- Component StatusBadge (Điều chỉnh màu sắc tông trầm hơn) ---
 const StatusBadge = ({ status }) => {
     const getStatusStyles = () => {
         switch(status) {
             case 'Chờ xử lý':
-                return 'bg-yellow-100 text-yellow-800';
+                return 'bg-yellow-100 text-yellow-700 border border-yellow-200';
             case 'Đang làm':
-                return 'bg-blue-100 text-blue-800';
+                // Thay thế bằng tông màu xanh chủ đạo
+                return `bg-${PRIMARY_BG} text-${PRIMARY_COLOR}-700 border border-${BORDER_COLOR}`;
             case 'Hoàn thành':
-                return 'bg-green-100 text-green-800';
+                return 'bg-green-100 text-green-700 border border-green-200';
             default:
-                return 'bg-gray-100 text-gray-800';
+                return 'bg-gray-100 text-gray-700 border border-gray-200';
         }
     };
 
     return (
-        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusStyles()}`}>
-      {status}
-    </span>
+        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium shadow-sm ${getStatusStyles()}`}>
+            {status}
+        </span>
     );
 };
 
-// Modal component
+// --- Component Modal Chi Tiết (Điều chỉnh màu và bố cục) ---
 const Modal = ({ show, onClose, taskDetails }) => {
     if (!show || !taskDetails) {
         return null;
     }
 
     return (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex justify-center items-center">
-            <div className="relative bg-white rounded-lg shadow-xl w-11/12 md:max-w-xl mx-auto p-6 transition-all transform scale-100 opacity-100 animate-fadeInUp">
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-60 overflow-y-auto h-full w-full z-50 flex justify-center items-center backdrop-blur-sm">
+            <div className="relative bg-white rounded-xl shadow-2xl w-11/12 md:max-w-xl mx-auto p-6 transition-all transform scale-100 opacity-100 animate-fadeInUp border-t-8 border-indigo-600">
                 <button
                     onClick={onClose}
-                    className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition-colors"
                 >
                     <FaTimesCircle size={24} />
                 </button>
 
-                <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4 pb-2 border-b border-blue-200 flex items-center">
-                    <FaInfoCircle className="mr-3 text-blue-500" /> Chi Tiết Phiếu Tiếp Nhận
+                <h2 className={`text-2xl font-extrabold text-${PRIMARY_COLOR}-700 mb-5 pb-3 border-b border-${BORDER_COLOR} flex items-center`}>
+                    <FaInfoCircle className={`mr-3 text-${PRIMARY_COLOR}-500`} /> Chi Tiết Phiếu Tiếp Nhận
                 </h2>
 
-                <div className="space-y-4">
-                    <div className="bg-blue-50 p-4 rounded-lg shadow-sm">
-                        <h3 className="text-lg font-semibold text-blue-700 mb-2 flex items-center">
-                            <FaCar className="mr-2 text-blue-500" /> Thông tin khách hàng
+                <div className="space-y-5">
+                    {/* Thẻ Thông tin khách hàng */}
+                    <div className="bg-white p-4 rounded-xl shadow-lg border border-indigo-100 hover:shadow-xl transition-shadow duration-300">
+                        <h3 className={`text-lg font-semibold text-${PRIMARY_COLOR}-600 mb-3 flex items-center border-b pb-2 border-indigo-50`}>
+                            <FaCar className={`mr-2 text-${PRIMARY_COLOR}-500`} /> Thông tin khách hàng
                         </h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="bg-white p-3 rounded-lg border border-blue-100">
-                                <p className="text-sm text-gray-500">Họ và tên khách hàng</p>
-                                <p className="font-medium text-gray-900">{taskDetails.customer}</p>
+                            <div className="p-2 border-l-4 border-gray-200">
+                                <p className="text-xs text-gray-500 uppercase tracking-wider">Họ và tên</p>
+                                <p className="font-bold text-gray-900">{taskDetails.customer}</p>
                             </div>
-                            <div className="bg-white p-3 rounded-lg border border-blue-100">
-                                <p className="text-sm text-gray-500">Số điện thoại</p>
-                                <p className="font-medium text-gray-900">{taskDetails.phone}</p>
+                            <div className="p-2 border-l-4 border-gray-200">
+                                <p className="text-xs text-gray-500 uppercase tracking-wider">Số điện thoại</p>
+                                <p className="font-bold text-gray-900">{taskDetails.phone}</p>
                             </div>
                         </div>
                     </div>
 
-                    <div className="bg-green-50 p-4 rounded-lg shadow-sm">
-                        <h3 className="text-lg font-semibold text-green-700 mb-2 flex items-center">
+                    {/* Thẻ Thông tin xe */}
+                    <div className="bg-white p-4 rounded-xl shadow-lg border border-green-100 hover:shadow-xl transition-shadow duration-300">
+                        <h3 className="text-lg font-semibold text-green-600 mb-3 flex items-center border-b pb-2 border-green-50">
                             <FaTools className="mr-2 text-green-500" /> Thông tin xe
                         </h3>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            <div className="bg-white p-3 rounded-lg border border-green-100">
-                                <p className="text-sm text-gray-500">Biển số xe</p>
-                                <p className="font-medium text-gray-900">{taskDetails.car}</p>
+                            <div className="p-2 border-l-4 border-gray-200">
+                                <p className="text-xs text-gray-500 uppercase tracking-wider">Biển số xe</p>
+                                <p className="font-bold text-gray-900">{taskDetails.car}</p>
                             </div>
-                            <div className="bg-white p-3 rounded-lg border border-green-100">
-                                <p className="text-sm text-gray-500">Hãng xe</p>
-                                <p className="font-medium text-gray-900">{taskDetails.carBrand || 'Không có'}</p>
+                            <div className="p-2 border-l-4 border-gray-200">
+                                <p className="text-xs text-gray-500 uppercase tracking-wider">Hãng xe</p>
+                                <p className="font-bold text-gray-900">{taskDetails.carBrand || 'Không có'}</p>
                             </div>
-                            <div className="bg-white p-3 rounded-lg border border-green-100">
-                                <p className="text-sm text-gray-500">Đời xe</p>
-                                <p className="font-medium text-gray-900">{taskDetails.carModel || 'Không có'}</p>
+                            <div className="p-2 border-l-4 border-gray-200">
+                                <p className="text-xs text-gray-500 uppercase tracking-wider">Đời xe</p>
+                                <p className="font-bold text-gray-900">{taskDetails.carModel || 'Không có'}</p>
                             </div>
                         </div>
                     </div>
 
-                    <div className="bg-yellow-50 p-4 rounded-lg shadow-sm">
-                        <h3 className="text-lg font-semibold text-yellow-700 mb-2 flex items-center">
+                    {/* Thẻ Mô tả tình trạng */}
+                    <div className="bg-white p-4 rounded-xl shadow-lg border border-yellow-100 hover:shadow-xl transition-shadow duration-300">
+                        <h3 className="text-lg font-semibold text-yellow-600 mb-3 flex items-center border-b pb-2 border-yellow-50">
                             <FaClipboardList className="mr-2 text-yellow-500" /> Mô tả tình trạng ban đầu
                         </h3>
-                        <div className="bg-white p-3 rounded-lg border border-yellow-100">
-                            <p className="font-medium text-gray-900 leading-relaxed">{taskDetails.initialDescription || 'Không có mô tả'}</p>
+                        <div className="p-2 bg-yellow-50 rounded-lg">
+                            <p className="font-medium text-gray-800 leading-relaxed italic">{taskDetails.initialDescription || 'Không có mô tả'}</p>
                         </div>
                     </div>
                 </div>
@@ -171,7 +182,7 @@ const Modal = ({ show, onClose, taskDetails }) => {
                 <div className="mt-6 flex justify-end">
                     <button
                         onClick={onClose}
-                        className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+                        className={`px-6 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors border border-gray-200`}
                     >
                         Đóng
                     </button>
@@ -181,7 +192,7 @@ const Modal = ({ show, onClose, taskDetails }) => {
     );
 };
 
-// Component Modal Cập Nhật Tiến Độ
+// --- Component Modal Cập Nhật Tiến Độ (Điều chỉnh màu) ---
 const UpdateProgressModal = ({ show, onClose, task, onUpdate }) => {
     if (!show || !task) return null;
 
@@ -198,40 +209,39 @@ const UpdateProgressModal = ({ show, onClose, task, onUpdate }) => {
     };
 
     return (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex justify-center items-center">
-            <div className="relative bg-white rounded-lg shadow-xl w-11/12 md:max-w-md mx-auto p-6 transition-all transform scale-100 opacity-100 animate-fadeInUp">
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-60 overflow-y-auto h-full w-full z-50 flex justify-center items-center backdrop-blur-sm">
+            <div className="relative bg-white rounded-xl shadow-2xl w-11/12 md:max-w-md mx-auto p-6 transition-all transform scale-100 opacity-100 animate-fadeInUp border-t-8 border-indigo-600">
                 <button
                     onClick={onClose}
-                    className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition-colors"
                 >
                     <FaTimesCircle size={24} />
                 </button>
-                <h2 className="text-xl font-bold text-gray-800 mb-4 pb-2 border-b border-purple-200 flex items-center">
-                    <FaSync className="mr-3 text-purple-500" /> Cập nhật tiến độ
+                <h2 className={`text-2xl font-extrabold text-${PRIMARY_COLOR}-700 mb-4 pb-2 border-b border-${BORDER_COLOR} flex items-center`}>
+                    <FaSync className={`mr-3 text-${PRIMARY_COLOR}-500`} /> Cập nhật tiến độ
                 </h2>
-                <hr className="mb-4" />
 
                 <div className="space-y-4">
                     <p className="text-sm text-gray-600">
-                        Cập nhật tiến độ cho xe <span className="font-semibold text-blue-600">{task.car}</span> (<span className="font-semibold text-green-600">{task.service}</span>)
+                        Cập nhật tiến độ cho xe <span className={`font-semibold text-${PRIMARY_COLOR}-600`}>{task.car}</span> (<span className="font-semibold text-green-600">{task.service}</span>)
                     </p>
                     <div className="mt-4">
-                        <h3 className="text-md font-semibold mb-3 text-gray-700">Chọn trạng thái hiện tại:</h3>
-                        <div className="grid grid-cols-1 gap-2">
+                        <h3 className="text-md font-bold mb-3 text-gray-700">Chọn trạng thái hiện tại:</h3>
+                        <div className="grid grid-cols-1 gap-3">
                             {progressSteps.map((step, index) => (
                                 <button
                                     key={index}
                                     onClick={() => handleUpdateClick(index)}
                                     className={`
-                                        flex items-center p-3 rounded-lg text-left transition-colors duration-200 ease-in-out
+                                        flex items-center p-4 rounded-xl text-left transition-all duration-300 ease-in-out border
                                         ${task.progress === index
-                                        ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg transform scale-105'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md'}
+                                        ? `bg-gradient-to-r from-${PRIMARY_COLOR}-500 to-${PRIMARY_COLOR}-600 text-white shadow-lg transform scale-[1.02] border-${PRIMARY_COLOR}-700`
+                                        : 'bg-gray-50 text-gray-700 hover:bg-gray-100 hover:shadow-md border-gray-200'}
                                     `}
                                 >
-                                    <span className="flex items-center">
-                                      <step.icon className="mr-3" />
-                                      <span>{step.label}</span>
+                                    <span className="flex items-center font-semibold">
+                                        <step.icon className="mr-3" />
+                                        <span>{step.label}</span>
                                     </span>
                                     {task.progress === index && (
                                         <span className="ml-auto text-sm font-medium">
@@ -247,7 +257,7 @@ const UpdateProgressModal = ({ show, onClose, task, onUpdate }) => {
                 <div className="mt-6 flex justify-end">
                     <button
                         onClick={onClose}
-                        className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+                        className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors border border-gray-200"
                     >
                         Hủy
                     </button>
@@ -257,7 +267,7 @@ const UpdateProgressModal = ({ show, onClose, task, onUpdate }) => {
     );
 };
 
-// --- New Pagination Component ---
+// --- Component Pagination (Điều chỉnh màu) ---
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
     const getPageNumbers = () => {
         const pages = [];
@@ -296,7 +306,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
     const pageNumbers = getPageNumbers();
 
     return (
-        <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+        <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-4 sm:px-6 rounded-b-xl shadow-lg">
             <div className="flex-1 flex justify-between sm:hidden">
                 <button
                     onClick={() => onPageChange(currentPage - 1)}
@@ -320,7 +330,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
                     </p>
                 </div>
                 <div>
-                    <nav className="relative z-0 inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                    <nav className="relative z-0 inline-flex -space-x-px rounded-md shadow-lg" aria-label="Pagination">
                         <button
                             onClick={() => onPageChange(currentPage - 1)}
                             disabled={currentPage === 1}
@@ -339,9 +349,9 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
                                 <button
                                     key={page}
                                     onClick={() => onPageChange(page)}
-                                    className={`relative inline-flex items-center border border-gray-300 px-4 py-2 text-sm font-medium
+                                    className={`relative inline-flex items-center border border-gray-300 px-4 py-2 text-sm font-medium transition-colors
                                     ${currentPage === page
-                                        ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
+                                        ? `z-10 bg-${PRIMARY_BG} border-${PRIMARY_COLOR}-500 text-${PRIMARY_COLOR}-600 font-bold`
                                         : 'bg-white text-gray-700 hover:bg-gray-50'
                                     }`}
                                 >
@@ -364,8 +374,8 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
         </div>
     );
 };
-// --- End New Pagination Component ---
 
+// --- Component Dashboard (Chính) ---
 const StaffDashboardPage = () => {
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(true);
@@ -381,7 +391,7 @@ const StaffDashboardPage = () => {
     const [taskToUpdate, setTaskToUpdate] = useState(null);
 
     const [currentPage, setCurrentPage] = useState(1);
-    const tasksPerPage = 10; // Changed to 10 per your request
+    const tasksPerPage = 10;
 
     const [staffData, setStaffData] = useState({
         pendingTasks: [],
@@ -389,6 +399,7 @@ const StaffDashboardPage = () => {
         completedTasks: [],
     });
 
+    // Dummy data fetching (Giữ nguyên logic này)
     useEffect(() => {
         const fetchData = async () => {
             setIsLoading(true);
@@ -475,7 +486,7 @@ const StaffDashboardPage = () => {
         switch (activeTab) {
             case 'pending':
                 return staffData.pendingTasks;
-            case 'in-progress':
+            case 'inProgress':
                 return staffData.inProgressTasks;
             case 'completed':
                 return staffData.completedTasks;
@@ -484,290 +495,256 @@ const StaffDashboardPage = () => {
         }
     };
 
-    const currentTasks = getTasksByTab();
-    const filteredTasks = currentTasks
-        .filter(task =>
-            task.car.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            task.service.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (task.customer && task.customer.toLowerCase().includes(searchTerm.toLowerCase()))
-        );
-
-    const totalPages = Math.ceil(filteredTasks.length / tasksPerPage);
-    const indexOfLastTask = currentPage * tasksPerPage;
-    const indexOfFirstTask = indexOfLastTask - tasksPerPage;
-    const tasksToShow = filteredTasks.slice(indexOfFirstTask, indexOfLastTask);
-
-    const handleCreateReceptionForm = () => {
-        navigate('/staff/reception-form');
-    };
-
-    const handleOpenModal = (task) => {
+    const handleViewDetails = (task) => {
         setSelectedTask(task);
         setShowModal(true);
     };
 
-    const handleCloseModal = () => {
-        setShowModal(false);
-        setSelectedTask(null);
-    };
-
-    const handleOpenUpdateModal = (e, task) => {
-        e.stopPropagation();
+    const handleOpenUpdateModal = (task) => {
         setTaskToUpdate(task);
         setShowUpdateModal(true);
     };
 
     const handleUpdateProgress = (newProgressIndex) => {
-        const updatedTask = { ...taskToUpdate };
-        const progressSteps = ['Chờ xử lý', 'Đang làm', 'Đang làm', 'Đang làm', 'Hoàn thành'];
-        updatedTask.progress = newProgressIndex;
-        updatedTask.status = progressSteps[newProgressIndex];
-
-        setStaffData(prev => {
-            let newPendingTasks = prev.pendingTasks.filter(t => t.id !== updatedTask.id);
-            let newInProgressTasks = prev.inProgressTasks.filter(t => t.id !== updatedTask.id);
-            let newCompletedTasks = prev.completedTasks.filter(t => t.id !== updatedTask.id);
-
-            if (updatedTask.status === 'Chờ xử lý') {
-                newPendingTasks = [...newPendingTasks, updatedTask];
-            } else if (updatedTask.status === 'Đang làm') {
-                newInProgressTasks = [...newInProgressTasks, updatedTask];
-            } else if (updatedTask.status === 'Hoàn thành') {
-                updatedTask.completedDate = new Date().toLocaleDateString('vi-VN');
-                newCompletedTasks = [...newCompletedTasks, updatedTask];
+        // Cần thêm logic cập nhật trạng thái/tiến độ thực tế ở đây
+        // Trong ví dụ này, ta chỉ giả lập cập nhật và thông báo
+        if (taskToUpdate) {
+            let newStatus;
+            let newProgressLabel;
+            if (newProgressIndex === 0) {
+                newStatus = 'Chờ xử lý';
+                newProgressLabel = 'Tiếp nhận xe';
+            } else if (newProgressIndex >= 1 && newProgressIndex <= 3) {
+                newStatus = 'Đang làm';
+                newProgressLabel = ['Kiểm tra & Báo giá', 'Sửa chữa', 'Kiểm tra cuối cùng'][newProgressIndex - 1];
+            } else {
+                newStatus = 'Hoàn thành';
+                newProgressLabel = 'Hoàn thành';
             }
 
-            return {
-                pendingTasks: newPendingTasks.sort((a, b) => a.id - b.id),
-                inProgressTasks: newInProgressTasks.sort((a, b) => a.id - b.id),
-                completedTasks: newCompletedTasks.sort((a, b) => a.id - b.id)
-            };
-        });
+            // Giả lập cập nhật dữ liệu (cần được thay bằng API call thực tế)
+            setStaffData(prevData => {
+                const updatedTask = {
+                    ...taskToUpdate,
+                    status: newStatus,
+                    progress: newProgressIndex,
+                    completedDate: newProgressIndex === 4 ? new Date().toLocaleDateString('vi-VN') : undefined,
+                };
 
-        showNotificationMessage('success', `Đã cập nhật trạng thái cho xe ${updatedTask.car} thành "${updatedTask.status}"`);
-        setShowUpdateModal(false);
-        setTaskToUpdate(null);
+                const filterAndMap = (tasks) => tasks.filter(t => t.id !== taskToUpdate.id).map(t => ({...t}));
+
+                let newPending = filterAndMap(prevData.pendingTasks);
+                let newInProgress = filterAndMap(prevData.inProgressTasks);
+                let newCompleted = filterAndMap(prevData.completedTasks);
+
+                if (newStatus === 'Chờ xử lý') {
+                    newPending.push(updatedTask);
+                } else if (newStatus === 'Đang làm') {
+                    newInProgress.push(updatedTask);
+                } else if (newStatus === 'Hoàn thành') {
+                    newCompleted.push(updatedTask);
+                }
+
+                // Sắp xếp lại
+                newPending.sort((a, b) => b.id - a.id);
+                newInProgress.sort((a, b) => b.id - a.id);
+                newCompleted.sort((a, b) => b.id - a.id);
+
+                return {
+                    pendingTasks: newPending,
+                    inProgressTasks: newInProgress,
+                    completedTasks: newCompleted,
+                };
+            });
+
+            showNotificationMessage('success', `Cập nhật tiến độ thành công: ${taskToUpdate.car} -> ${newProgressLabel}`);
+            setShowUpdateModal(false);
+            setTaskToUpdate(null);
+        }
     };
 
-    const handlePageChange = (pageNumber) => {
-        setCurrentPage(pageNumber);
+    const filteredTasks = useMemo(() => {
+        const tasks = getTasksByTab();
+        if (!searchTerm) return tasks;
+        return tasks.filter(task =>
+            task.car.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            task.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            task.service.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }, [staffData, activeTab, searchTerm]);
+
+    const totalPages = Math.ceil(filteredTasks.length / tasksPerPage);
+    const startIndex = (currentPage - 1) * tasksPerPage;
+    const currentTasks = filteredTasks.slice(startIndex, startIndex + tasksPerPage);
+
+    const handlePageChange = (page) => {
+        if (page > 0 && page <= totalPages) {
+            setCurrentPage(page);
+        }
     };
 
-    const handleTabChange = (tabName) => {
-        setActiveTab(tabName);
-        setSearchTerm('');
-        setCurrentPage(1);
-    };
+    const MetricCard = ({ title, count, icon: Icon, color, isActive, onClick }) => (
+        <div
+            onClick={onClick}
+            className={`flex flex-col p-5 rounded-xl shadow-lg cursor-pointer transition-all duration-300
+            ${isActive ? `bg-white border-2 border-${PRIMARY_COLOR}-500 transform scale-[1.03] shadow-2xl` : `bg-white hover:shadow-xl border border-gray-100 hover:border-gray-300`}
+            `}
+        >
+            <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-gray-500 uppercase">{title}</p>
+                <Icon className={`text-2xl text-${color}-500`} />
+            </div>
+            <p className="text-4xl font-extrabold text-gray-800 mt-2">{count}</p>
+        </div>
+    );
 
     return (
-        <div className="flex flex-col min-h-screen">
-            <div className="container mx-auto px-4 py-6 flex-grow">
-                <style>
-                    {`
-                    @keyframes slideIn {
-                        from { transform: translateX(100%); opacity: 0; }
-                        to { transform: translateX(0); opacity: 1; }
-                    }
-                    @keyframes fadeInUp {
-                        from { opacity: 0; transform: translateY(20px); }
-                        to { opacity: 1; transform: translateY(0); }
-                    }
-                    .animate-slideIn {
-                        animation: slideIn 0.3s ease-out forwards;
-                    }
-                    .animate-fadeInUp {
-                        animation: fadeInUp 0.3s ease-out forwards;
-                    }
-                    `}
-                </style>
+        <div className="min-h-screen bg-gray-50 p-4 md:p-8">
+            <h1 className={`text-3xl md:text-4xl font-extrabold text-${PRIMARY_COLOR}-800 mb-2 border-b-4 border-${PRIMARY_COLOR}-100 pb-2 flex items-center`}>
+                <FaTools className={`mr-3 text-${PRIMARY_COLOR}-500`} /> Bảng Điều Khiển Nhân Viên
+            </h1>
+            <p className="text-gray-600 mb-6">Quản lý các phiếu tiếp nhận và theo dõi tiến độ công việc.</p>
 
-                {showNotification && (
-                    <Notification
-                        type={notification.type}
-                        message={notification.message}
-                        onClose={() => setShowNotification(false)}
-                    />
-                )}
-
-                <Modal show={showModal} onClose={handleCloseModal} taskDetails={selectedTask} />
-                <UpdateProgressModal
-                    show={showUpdateModal}
-                    onClose={() => setShowUpdateModal(false)}
-                    task={taskToUpdate}
-                    onUpdate={handleUpdateProgress}
+            {/* Metrics Bar */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+                <MetricCard
+                    title="Chờ xử lý"
+                    count={staffData.pendingTasks.length}
+                    icon={FaHourglassHalf}
+                    color="yellow"
+                    isActive={activeTab === 'pending'}
+                    onClick={() => { setActiveTab('pending'); setCurrentPage(1); }}
                 />
+                <MetricCard
+                    title="Đang tiến hành"
+                    count={staffData.inProgressTasks.length}
+                    icon={FaThumbtack}
+                    color={PRIMARY_COLOR} // Sử dụng màu chủ đạo
+                    isActive={activeTab === 'inProgress'}
+                    onClick={() => { setActiveTab('inProgress'); setCurrentPage(1); }}
+                />
+                <MetricCard
+                    title="Đã hoàn thành"
+                    count={staffData.completedTasks.length}
+                    icon={FaRegSmileBeam}
+                    color="green"
+                    isActive={activeTab === 'completed'}
+                    onClick={() => { setActiveTab('completed'); setCurrentPage(1); }}
+                />
+            </div>
 
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-                    <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4 md:mb-0 flex items-center">
-                        <FaCar className="mr-3 text-blue-600" />
-                        Tổng quan công việc
-                    </h1>
-
-                    <div className="flex flex-col sm:flex-row gap-4">
-                        <div className="relative flex-1">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <FaSearch className="text-gray-400" />
-                            </div>
-                            <input
-                                type="text"
-                                placeholder="Tìm kiếm biển số, dịch vụ..."
-                                className="pl-10 pr-4 py-2 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
-                                value={searchTerm}
-                                onChange={(e) => {
-                                    setSearchTerm(e.target.value);
-                                    setCurrentPage(1);
-                                }}
-                            />
-                        </div>
-
+            {/* Main Content Card */}
+            <div className="bg-white shadow-2xl rounded-xl overflow-hidden">
+                {/* Header & Actions */}
+                <div className="p-5 border-b border-gray-100 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+                    <div className="flex space-x-3 w-full md:w-auto">
                         <button
                             onClick={handleRefresh}
-                            className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50 transition-colors transform hover:scale-105 active:scale-95"
-                            disabled={isLoading}
+                            className={`p-3 bg-white text-${PRIMARY_COLOR}-600 rounded-full shadow-md hover:bg-${PRIMARY_BG} transition-colors border border-${PRIMARY_COLOR}-300`}
                         >
-                            <FaSync className={`mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-                            Làm mới
+                            <FaSync className={isLoading ? 'animate-spin' : ''} />
                         </button>
-
                         <button
-                            onClick={handleCreateReceptionForm}
-                            className="flex items-center justify-center bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-blue-700 transition-all transform hover:scale-105 active:scale-95"
+                            onClick={() => navigate('/new-receipt')} // Thay đổi route nếu cần
+                            className={`flex items-center px-4 py-2 bg-gradient-to-r from-${PRIMARY_COLOR}-500 to-${PRIMARY_COLOR}-600 text-white rounded-lg font-semibold shadow-lg hover:from-${PRIMARY_COLOR}-600 hover:to-${PRIMARY_COLOR}-700 transition-all`}
                         >
-                            <FaFileInvoiceDollar className="mr-2" />
-                            <span className="hidden sm:inline">Tạo Phiếu Tiếp nhận</span>
-                            <span className="sm:hidden">Tạo mới</span>
+                            <FaPlusCircle className="mr-2" /> Tạo Phiếu Mới
                         </button>
+                    </div>
+
+                    <div className="relative w-full md:w-80">
+                        <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                        <input
+                            type="text"
+                            placeholder="Tìm kiếm Biển số, Khách hàng..."
+                            value={searchTerm}
+                            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${PRIMARY_COLOR}-500 focus:border-${PRIMARY_COLOR}-500 transition-shadow"
+                        />
                     </div>
                 </div>
 
-                <div className="mb-6 border-b border-gray-200">
-                    <nav className="flex -mb-px overflow-x-auto">
-                        <button
-                            onClick={() => handleTabChange('pending')}
-                            className={`py-4 px-6 text-center border-b-2 font-medium text-sm flex-shrink-0 ${activeTab === 'pending'
-                                ? 'border-blue-500 text-blue-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
-                        >
-                            <div className="flex items-center justify-center">
-                                <FaThumbtack className="mr-2" />
-                                <span>Nhiệm vụ đang chờ</span>
-                                {staffData.pendingTasks.length > 0 && (
-                                    <span className="ml-2 bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
-                                    {staffData.pendingTasks.length}
-                                    </span>
-                                )}
-                            </div>
-                        </button>
-                        <button
-                            onClick={() => handleTabChange('in-progress')}
-                            className={`py-4 px-6 text-center border-b-2 font-medium text-sm flex-shrink-0 ${activeTab === 'in-progress'
-                                ? 'border-orange-500 text-orange-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
-                        >
-                            <div className="flex items-center justify-center">
-                                <FaHourglassHalf className="mr-2" />
-                                <span>Nhiệm vụ đang làm</span>
-                                {staffData.inProgressTasks.length > 0 && (
-                                    <span className="ml-2 bg-orange-100 text-orange-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
-                                    {staffData.inProgressTasks.length}
-                                    </span>
-                                )}
-                            </div>
-                        </button>
-                        <button
-                            onClick={() => handleTabChange('completed')}
-                            className={`py-4 px-6 text-center border-b-2 font-medium text-sm flex-shrink-0 ${activeTab === 'completed'
-                                ? 'border-green-500 text-green-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
-                        >
-                            <div className="flex items-center justify-center">
-                                <FaCheckCircle className="mr-2" />
-                                <span>Đã hoàn thành</span>
-                                {staffData.completedTasks.length > 0 && (
-                                    <span className="ml-2 bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
-                                    {staffData.completedTasks.length}
-                                    </span>
-                                )}
-                            </div>
-                        </button>
-                    </nav>
-                </div>
-
-                <div className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-100">
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
+                {/* Table */}
+                <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                        <thead className={`bg-${PRIMARY_BG} text-${PRIMARY_COLOR}-700`}>
+                        <tr>
+                            <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">Mã số</th>
+                            <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">Biển số</th>
+                            <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">Dịch vụ</th>
+                            <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">Ngày tiếp nhận</th>
+                            <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">Trạng thái</th>
+                            <th className="px-4 py-3 text-center text-xs font-bold uppercase tracking-wider">Hành động</th>
+                        </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-100">
+                        {isLoading ? (
+                            Array.from({ length: tasksPerPage }).map((_, index) => <SkeletonRow key={index} />)
+                        ) : currentTasks.length === 0 ? (
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    <div className="flex items-center">
-                                        Biển số
-                                    </div>
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dịch vụ</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Khách hàng</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày tiếp nhận</th>
-                                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Hành động</th>
+                                <td colSpan="6" className="px-4 py-10 text-center text-gray-500 italic">
+                                    Không tìm thấy công việc nào phù hợp với trạng thái hoặc từ khóa tìm kiếm.
+                                </td>
                             </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
-                            {isLoading ? (
-                                Array.from({ length: tasksPerPage }).map((_, index) => (
-                                    <SkeletonRow key={index} />
-                                ))
-                            ) : tasksToShow.length > 0 ? (
-                                tasksToShow.map((task) => (
-                                    <tr key={task.id} className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{task.car}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{task.service}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{task.customer}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                            <StatusBadge status={task.status} />
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{task.date}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium space-x-2">
+                        ) : (
+                            currentTasks.map((task) => (
+                                <tr key={task.id} className="hover:bg-gray-50 transition-colors duration-150">
+                                    <td className="px-4 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">#{task.id}</td>
+                                    <td className="px-4 py-4 whitespace-nowrap text-sm text-${PRIMARY_COLOR}-600 font-medium">{task.car}</td>
+                                    <td className="px-4 py-4 text-sm text-gray-700 max-w-xs truncate">{task.service}</td>
+                                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{task.date}</td>
+                                    <td className="px-4 py-4 whitespace-nowrap">
+                                        <StatusBadge status={task.status} />
+                                    </td>
+                                    <td className="px-4 py-4 whitespace-nowrap text-center text-sm font-medium">
+                                        <div className="flex justify-center space-x-2">
                                             <button
-                                                onClick={() => handleOpenModal(task)}
-                                                className="text-blue-600 hover:text-blue-900 p-2 rounded-full hover:bg-gray-200 transition-colors"
+                                                onClick={() => handleViewDetails(task)}
                                                 title="Xem chi tiết"
+                                                className={`p-2 rounded-full text-${PRIMARY_COLOR}-600 hover:bg-${PRIMARY_COLOR}-100 transition-colors`}
                                             >
-                                                <FaEye />
+                                                <FaEye size={16} />
                                             </button>
                                             <button
-                                                onClick={(e) => handleOpenUpdateModal(e, task)}
-                                                className="text-purple-600 hover:text-purple-900 p-2 rounded-full hover:bg-gray-200 transition-colors"
+                                                onClick={() => handleOpenUpdateModal(task)}
                                                 title="Cập nhật tiến độ"
+                                                className={`p-2 rounded-full text-green-600 hover:bg-green-100 transition-colors`}
+                                                disabled={task.status === 'Hoàn thành'}
                                             >
-                                                <FaSync />
+                                                <FaSync size={16} />
                                             </button>
-                                        </td>
-                                    </tr>
-                                ))
-                            ) : (
-                                <tr>
-                                    <td colSpan="6" className="px-6 py-12 text-center text-gray-500">
-                                        <div className="flex flex-col items-center">
-                                            <FaRegSmileBeam className="h-12 w-12 text-gray-400 mb-4" />
-                                            <p className="font-semibold text-lg">Không tìm thấy công việc nào.</p>
-                                            <p className="mt-1 text-sm text-gray-500">Hãy thử tìm kiếm với từ khóa khác hoặc tạo một phiếu tiếp nhận mới.</p>
                                         </div>
                                     </td>
                                 </tr>
-                            )}
-                            </tbody>
-                        </table>
-                    </div>
-                    {/* Pagination component */}
-                    {filteredTasks.length > tasksPerPage && (
-                        <Pagination
-                            currentPage={currentPage}
-                            totalPages={totalPages}
-                            onPageChange={handlePageChange}
-                        />
-                    )}
+                            ))
+                        )}
+                        </tbody>
+                    </table>
                 </div>
+
+                {/* Pagination */}
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
+                />
             </div>
 
+            {/* Modals and Notification */}
+            <Modal show={showModal} onClose={() => setShowModal(false)} taskDetails={selectedTask} />
+            <UpdateProgressModal
+                show={showUpdateModal}
+                onClose={() => setShowUpdateModal(false)}
+                task={taskToUpdate}
+                onUpdate={handleUpdateProgress}
+            />
+            {showNotification && (
+                <Notification
+                    type={notification.type}
+                    message={notification.message}
+                    onClose={() => setShowNotification(false)}
+                />
+            )}
         </div>
     );
 };
