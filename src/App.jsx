@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import LoginPage from './pages/Auth/LoginPage';
-import SignupPage from './pages/Auth/SignupPage';
 import StaffDashboardPage from './pages/StaffDashboardPage';
 import ServiceReceptionPage from './pages/ServiceReceptionPage';
 import ReceptionForm from './pages/Staff/ReceptionForm';
@@ -44,9 +43,6 @@ function App() {
     return (
         <Routes>
             <Route path="/" element={<LoginPage onLoginSuccess={handleLoginSuccess} />} />
-            <Route path="/signup" element={<SignupPage />} />
-
-            {/* Protected routes for Staff */}
             <Route element={
                 <ProtectedRoute 
                     isLoggedIn={isLoggedIn} 
@@ -57,7 +53,6 @@ function App() {
                 <Route element={
                     <ProtectedLayout 
                         userName={userName} 
-                        userRole="staff" 
                         onLogout={handleLogout} 
                     />}
                 >
