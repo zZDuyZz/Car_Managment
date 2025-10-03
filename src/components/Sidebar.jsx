@@ -30,7 +30,7 @@ const Sidebar = () => {
                 { name: 'Báo cáo tồn phụ tùng', path: '/reports/inventory' }
             ]
         },
-        { name: 'Quy định', path: '/regulations', icon: FaCog },
+        { name: 'Quy định', path: '/regulations', icon: FaCog }
     ];
     
     const toggleReportMenu = () => {
