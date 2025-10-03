@@ -587,12 +587,7 @@ const StaffDashboardPage = () => {
                         >
                             <FaSync className={isLoading ? 'animate-spin' : ''} />
                         </button>
-                        <button
-                            onClick={() => navigate('/new-receipt')} // Thay đổi route nếu cần
-                            className={`flex items-center px-4 py-2 bg-gradient-to-r from-${PRIMARY_COLOR}-500 to-${PRIMARY_COLOR}-600 text-white rounded-lg font-semibold shadow-lg hover:from-${PRIMARY_COLOR}-600 hover:to-${PRIMARY_COLOR}-700 transition-all`}
-                        >
-                            <FaPlusCircle className="mr-2" /> Tạo Phiếu Mới
-                        </button>
+
                     </div>
 
                     <div className="relative w-full md:w-80">
