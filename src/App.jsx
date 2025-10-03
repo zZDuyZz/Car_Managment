@@ -8,6 +8,12 @@ import ReceptionForm from './pages/Staff/ReceptionForm';
 import RepairForm from './pages/Staff/RepairForm';
 import ProtectedLayout from './components/ProtectedLayout';
 import ProtectedRoute from './components/ProtectedRoute';
+import RepairOrdersPage from './pages/RepairOrdersPage';
+import VehicleSearchPage from './pages/VehicleSearchPage';
+import PaymentFormsPage from './pages/PaymentFormsPage';
+import RevenuePage from './pages/Reports/RevenuePage';
+import InventoryPage from './pages/Reports/InventoryPage';
+import RegulationsPage from './pages/RegulationsPage';
 
 function App() {
     const [isLoggedIn, setIsLoggedIn] = useState(
@@ -57,9 +63,14 @@ function App() {
                 >
                     <Route path="/dashboard" element={<StaffDashboardPage />} />
                     <Route path="/reception" element={<ServiceReceptionPage />} />
+                    <Route path="/repair-orders" element={<RepairOrdersPage />} />
+                    <Route path="/vehicle-search" element={<VehicleSearchPage />} />
+                    <Route path="/payment-forms" element={<PaymentFormsPage />} />
+                    <Route path="/reports/revenue" element={<RevenuePage />} />
+                    <Route path="/reports/inventory" element={<InventoryPage />} />
+                    <Route path="/regulations" element={<RegulationsPage />} />
                     <Route path="/reception-form" element={<ReceptionForm />} />
                     <Route path="/repair-form" element={<RepairForm />} />
-                    <Route path="/history" element={<div>Trang Lịch sử sửa chữa</div>} />
                 </Route>
             </Route>
 
