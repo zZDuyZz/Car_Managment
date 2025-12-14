@@ -15,8 +15,6 @@ const LoginPage = ({ onLoginSuccess }) => {
         // ... (phần logic giả lập ở đây) ...
         const mockAdminEmail = "admin@example.com";
         const mockAdminPassword = "password123";
-        const mockCustomerEmail = "customer@example.com";
-        const mockCustomerPassword = "customer123";
         const mockStaffEmail = "staff@example.com";
         const mockStaffPassword = "staff123";
 
@@ -26,11 +24,6 @@ const LoginPage = ({ onLoginSuccess }) => {
                 alert("Đăng nhập với tài khoản Admin thành công!");
                 if (onLoginSuccess) {
                     onLoginSuccess('admin');
-                }
-            } else if (email === mockCustomerEmail && password === mockCustomerPassword) {
-                alert("Đăng nhập với tài khoản Customer thành công!");
-                if (onLoginSuccess) {
-                    onLoginSuccess('customer');
                 }
             } else if (email === mockStaffEmail && password === mockStaffPassword) {
                 alert("Đăng nhập với tài khoản Staff thành công!");
