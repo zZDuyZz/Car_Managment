@@ -14,7 +14,7 @@ const LoginPage = ({ onLoginSuccess }) => {
         setIsLoggingIn(true);
         // ... (phần logic giả lập ở đây) ...
         const mockAdminEmail = "admin@example.com";
-        const mockAdminPassword = "password123";
+        const mockAdminPassword = "123456";
         const mockStaffEmail = "staff@example.com";
         const mockStaffPassword = "staff123";
 
