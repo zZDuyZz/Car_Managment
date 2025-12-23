@@ -1,84 +1,131 @@
-import mysql from 'mysql2/promise';
-import 'dotenv/config';
+import sqlite3 from 'sqlite3';
+import { open } from 'sqlite';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import dotenv from 'dotenv';
 
-const dbConfig = {
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'QLGaraOto',
-  port: process.env.DB_PORT || 3306,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-  acquireTimeout: 60000,
-  timeout: 60000,
-  reconnect: true,
-  charset: 'utf8mb4',
-  multipleStatements: false // Security: prevent multiple statements
-};
+// Load environment variables
+dotenv.config();
 
-const pool = mysql.createPool(dbConfig);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-// Connection retry logic
-let retryCount = 0;
-const maxRetries = 5;
-const retryDelay = 2000; // 2 seconds
+// Database file path
+const dbPath = join(__dirname, '..', 'database', 'qlgaraoto.db');
 
-const testConnection = async () => {
+let db = null;
+
+// Initialize database connection
+const initDatabase = async () => {
   try {
-    const connection = await pool.getConnection();
+    db = await open({
+      filename: dbPath,
+      driver: sqlite3.Database
+    });
+
+    console.log('✅ SQLite database connection successful!');
+    console.log(`📊 Database file: ${dbPath}`);
     
-    // Test query
-    await connection.execute('SELECT 1 as test');
+    // Enable foreign keys
+    await db.exec('PRAGMA foreign_keys = ON');
     
-    console.log('✅ Database connection successful!');
-    console.log(`📊 Connected to: ${dbConfig.host}:${dbConfig.port}/${dbConfig.database}`);
-    console.log(`👤 User: ${dbConfig.user}`);
+    // Create tables if they don't exist
+    await createTables();
     
-    connection.release();
-    retryCount = 0; // Reset retry count on success
-    return true;
+    return db;
   } catch (error) {
-    console.error(`❌ Database connection failed (attempt ${retryCount + 1}/${maxRetries}):`, error.message);
-    
-    if (retryCount < maxRetries - 1) {
-      retryCount++;
-      console.log(`🔄 Retrying in ${retryDelay / 1000} seconds...`);
-      setTimeout(testConnection, retryDelay);
-    } else {
-      console.error('💥 Max retries reached. Please check your database configuration:');
-      console.error('1. Ensure MySQL server is running');
-      console.error('2. Verify database credentials in .env file');
-      console.error('3. Check if database exists');
-      console.error('4. Verify network connectivity');
-    }
-    return false;
+    console.error('❌ Database connection failed:', error.message);
+    throw error;
   }
 };
 
-// Initial connection test
-testConnection();
+// Create tables based on MySQL schema
+const createTables = async () => {
+  try {
+    // TAIKHOAN table
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS TAIKHOAN (
+        MaTaiKhoan INTEGER PRIMARY KEY AUTOINCREMENT,
+        TenChuTaiKhoan TEXT NOT NULL,
+        TenDangNhap TEXT UNIQUE NOT NULL,
+        MatKhau TEXT NOT NULL,
+        QuyenHan TEXT NOT NULL CHECK (QuyenHan IN ('ADMIN', 'STAFF')),
+        NgayTao DATETIME DEFAULT CURRENT_TIMESTAMP,
+        TrangThai TEXT DEFAULT 'ACTIVE' CHECK (TrangThai IN ('ACTIVE', 'INACTIVE'))
+      )
+    `);
 
-// Handle pool errors
-pool.on('connection', (connection) => {
-  console.log('🔗 New database connection established');
-});
+    // KHACHHANG table
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS KHACHHANG (
+        MaKhachHang INTEGER PRIMARY KEY AUTOINCREMENT,
+        TenKhachHang TEXT NOT NULL,
+        SoDienThoai TEXT,
+        DiaChi TEXT,
+        Email TEXT,
+        NgayTao DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
 
-pool.on('error', (err) => {
-  console.error('💥 Database pool error:', err);
-  if (err.code === 'PROTOCOL_CONNECTION_LOST') {
-    console.log('🔄 Attempting to reconnect...');
-    testConnection();
+    // XE table
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS XE (
+        MaXe INTEGER PRIMARY KEY AUTOINCREMENT,
+        BienSoXe TEXT UNIQUE NOT NULL,
+        TenChuXe TEXT NOT NULL,
+        LoaiXe TEXT,
+        MauXe TEXT,
+        NamSanXuat INTEGER,
+        MaKhachHang INTEGER,
+        NgayTao DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (MaKhachHang) REFERENCES KHACHHANG(MaKhachHang)
+      )
+    `);
+
+    // PHIEUSUA table
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS PHIEUSUA (
+        MaPhieuSua INTEGER PRIMARY KEY AUTOINCREMENT,
+        MaXe INTEGER NOT NULL,
+        NgayVao DATETIME DEFAULT CURRENT_TIMESTAMP,
+        NgayRa DATETIME,
+        TongTien DECIMAL(10,2) DEFAULT 0,
+        TrangThai TEXT DEFAULT 'DANG_SUA' CHECK (TrangThai IN ('DANG_SUA', 'HOAN_THANH', 'HUY')),
+        GhiChu TEXT,
+        MaTaiKhoan INTEGER,
+        FOREIGN KEY (MaXe) REFERENCES XE(MaXe),
+        FOREIGN KEY (MaTaiKhoan) REFERENCES TAIKHOAN(MaTaiKhoan)
+      )
+    `);
+
+    // CHITIETPHIEUSUA table
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS CHITIETPHIEUSUA (
+        MaChiTiet INTEGER PRIMARY KEY AUTOINCREMENT,
+        MaPhieuSua INTEGER NOT NULL,
+        NoiDungSua TEXT NOT NULL,
+        ChiPhiSua DECIMAL(10,2) NOT NULL,
+        FOREIGN KEY (MaPhieuSua) REFERENCES PHIEUSUA(MaPhieuSua)
+      )
+    `);
+
+    console.log('✅ Database tables created successfully');
+  } catch (error) {
+    console.error('❌ Error creating tables:', error.message);
+    throw error;
   }
-});
+};
 
-// Graceful shutdown
-process.on('SIGINT', async () => {
-  console.log('🛑 Closing database connections...');
-  await pool.end();
-});
+// Get database instance
+const getDatabase = async () => {
+  if (!db) {
+    await initDatabase();
+  }
+  return db;
+};
 
-export default pool;
+// Initialize database on import
+initDatabase().catch(console.error);
 
-// Export helper function for testing connection
-export { testConnection };
+export default getDatabase;
+export { initDatabase };

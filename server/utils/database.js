@@ -1,10 +1,19 @@
-import pool from '../config/db.js';
+import getDatabase from '../config/db.js';
 
 // Execute a single query
 export const executeQuery = async (query, params = []) => {
   try {
-    const [results] = await pool.execute(query, params);
-    return results;
+    const db = await getDatabase();
+    
+    // Check if it's a SELECT query
+    if (query.trim().toUpperCase().startsWith('SELECT')) {
+      const results = await db.all(query, params);
+      return results;
+    } else {
+      // INSERT, UPDATE, DELETE
+      const result = await db.run(query, params);
+      return result;
+    }
   } catch (error) {
     console.error('Database query error:', error);
     throw error;
@@ -13,24 +22,27 @@ export const executeQuery = async (query, params = []) => {
 
 // Execute multiple queries in a transaction
 export const executeTransaction = async (queries) => {
-  const connection = await pool.getConnection();
+  const db = await getDatabase();
   
   try {
-    await connection.beginTransaction();
+    await db.exec('BEGIN TRANSACTION');
     
     const results = [];
     for (const { query, params } of queries) {
-      const [result] = await connection.execute(query, params);
+      let result;
+      if (query.trim().toUpperCase().startsWith('SELECT')) {
+        result = await db.all(query, params);
+      } else {
+        result = await db.run(query, params);
+      }
       results.push(result);
     }
     
-    await connection.commit();
+    await db.exec('COMMIT');
     return results;
   } catch (error) {
-    await connection.rollback();
+    await db.exec('ROLLBACK');
     throw error;
-  } finally {
-    connection.release();
   }
 };
 
@@ -84,8 +96,8 @@ export const insertRecord = async (table, data) => {
   const result = await executeQuery(query, values);
   
   return {
-    insertId: result.insertId,
-    affectedRows: result.affectedRows
+    insertId: result.lastID,
+    affectedRows: result.changes
   };
 };
 
@@ -100,8 +112,8 @@ export const updateRecord = async (table, id, data, idColumn = 'id') => {
   const result = await executeQuery(query, values);
   
   return {
-    affectedRows: result.affectedRows,
-    changedRows: result.changedRows
+    affectedRows: result.changes,
+    changedRows: result.changes
   };
 };
 
@@ -111,7 +123,7 @@ export const deleteRecord = async (table, id, idColumn = 'id') => {
   const result = await executeQuery(query, [id]);
   
   return {
-    affectedRows: result.affectedRows
+    affectedRows: result.changes
   };
 };
 

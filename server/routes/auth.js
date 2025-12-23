@@ -35,7 +35,7 @@ router.post('/login', async (req, res, next) => {
     
     // Generate JWT token
     const tokenPayload = {
-      id: user.MaTK,
+      id: user.MaTaiKhoan,
       username: user.TenDangNhap,
       role: user.QuyenHan,
       fullName: user.TenChuTaiKhoan
@@ -47,7 +47,7 @@ router.post('/login', async (req, res, next) => {
     res.json(successResponse({
       token,
       user: {
-        id: user.MaTK,
+        id: user.MaTaiKhoan,
         username: user.TenDangNhap,
         fullName: user.TenChuTaiKhoan,
         role: user.QuyenHan
@@ -78,7 +78,7 @@ router.get('/verify', async (req, res, next) => {
     const decoded = verifyToken(token);
     
     // Get fresh user data
-    const query = 'SELECT MaTK, TenDangNhap, TenChuTaiKhoan, QuyenHan FROM TAIKHOAN WHERE MaTK = ? LIMIT 1';
+    const query = 'SELECT MaTaiKhoan, TenDangNhap, TenChuTaiKhoan, QuyenHan FROM TAIKHOAN WHERE MaTaiKhoan = ? LIMIT 1';
     const users = await executeQuery(query, [decoded.id]);
     
     if (users.length === 0) {
@@ -88,7 +88,7 @@ router.get('/verify', async (req, res, next) => {
     const user = users[0];
     res.json(successResponse({
       user: {
-        id: user.MaTK,
+        id: user.MaTaiKhoan,
         username: user.TenDangNhap,
         fullName: user.TenChuTaiKhoan,
         role: user.QuyenHan

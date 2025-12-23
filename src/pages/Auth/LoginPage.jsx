@@ -31,17 +31,12 @@ const LoginPage = ({ onLoginSuccess }) => {
                 localStorage.setItem('userRole', user.role);
                 localStorage.setItem('user', JSON.stringify(user));
                 
-                // Call success callback
+                // Call success callback - let App.jsx handle navigation
                 if (onLoginSuccess) {
                     onLoginSuccess(user.role);
                 }
                 
-                // Navigate based on role
-                if (user.role === 'admin') {
-                    navigate('/admin/accounts');
-                } else {
-                    navigate('/staff/customers');
-                }
+                // Don't navigate here - let App.jsx handle it
             }
         } catch (error) {
             console.error('Login error:', error);
@@ -72,13 +67,13 @@ const LoginPage = ({ onLoginSuccess }) => {
                     <div className="space-y-4">
                         <div>
                             <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
-                                Tên đăng nhập
+                                Email / Tên đăng nhập
                             </label>
                             <input
                                 id="username"
                                 type="text"
                                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400"
-                                placeholder="Nhập tên đăng nhập"
+                                placeholder="Nhập email hoặc tên đăng nhập"
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
                                 disabled={isLoggingIn}
@@ -115,7 +110,7 @@ const LoginPage = ({ onLoginSuccess }) => {
                 <div className="mt-4 p-4 bg-blue-50 rounded-lg">
                     <p className="text-sm text-blue-800 font-medium">Tài khoản demo:</p>
                     <p className="text-sm text-blue-600">
-                        Username: <code className="bg-blue-100 px-1 rounded">admin</code><br/>
+                        Email: <code className="bg-blue-100 px-1 rounded">admin@gmail.com</code><br/>
                         Password: <code className="bg-blue-100 px-1 rounded">admin123</code>
                     </p>
                 </div>

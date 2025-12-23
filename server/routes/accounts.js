@@ -14,8 +14,8 @@ router.get('/', authenticate, adminOnly, async (req, res, next) => {
     const offset = (page - 1) * limit;
     
     let query = `
-      SELECT MaTK, TenDangNhap, TenChuTaiKhoan, QuyenHan, 
-             DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s') as createdAt
+      SELECT MaTaiKhoan, TenDangNhap, TenChuTaiKhoan, QuyenHan, 
+             datetime('now') as createdAt
       FROM TAIKHOAN
     `;
     let countQuery = 'SELECT COUNT(*) as total FROM TAIKHOAN';
@@ -30,7 +30,7 @@ router.get('/', authenticate, adminOnly, async (req, res, next) => {
     }
     
     // Add pagination
-    query += ' ORDER BY MaTK DESC LIMIT ? OFFSET ?';
+    query += ' ORDER BY MaTaiKhoan DESC LIMIT ? OFFSET ?';
     params.push(parseInt(limit), parseInt(offset));
     
     // Execute queries
@@ -43,7 +43,7 @@ router.get('/', authenticate, adminOnly, async (req, res, next) => {
     
     // Format response
     const formattedAccounts = accounts.map(acc => ({
-      id: acc.MaTK,
+      id: acc.MaTaiKhoan,
       username: acc.TenDangNhap,
       fullName: acc.TenChuTaiKhoan,
       role: acc.QuyenHan.toLowerCase(),
@@ -79,7 +79,7 @@ router.post('/', authenticate, adminOnly, async (req, res, next) => {
     
     // Check if username exists
     const existingUser = await executeQuery(
-      'SELECT MaTK FROM TAIKHOAN WHERE TenDangNhap = ?',
+      'SELECT MaTaiKhoan FROM TAIKHOAN WHERE TenDangNhap = ?',
       [username]
     );
     
@@ -98,7 +98,7 @@ router.post('/', authenticate, adminOnly, async (req, res, next) => {
     
     // Return created account (without password)
     const newAccount = {
-      id: result.insertId,
+      id: result.lastID,
       username,
       fullName,
       role: role.toLowerCase(),
@@ -122,7 +122,7 @@ router.put('/:id', authenticate, adminOnly, async (req, res, next) => {
     
     // Check if account exists
     const existingAccount = await executeQuery(
-      'SELECT * FROM TAIKHOAN WHERE MaTK = ?',
+      'SELECT * FROM TAIKHOAN WHERE MaTaiKhoan = ?',
       [id]
     );
     
@@ -161,19 +161,19 @@ router.put('/:id', authenticate, adminOnly, async (req, res, next) => {
     // Execute update
     params.push(id);
     await executeQuery(
-      `UPDATE TAIKHOAN SET ${updates.join(', ')} WHERE MaTK = ?`,
+      `UPDATE TAIKHOAN SET ${updates.join(', ')} WHERE MaTaiKhoan = ?`,
       params
     );
     
     // Return updated account
     const updatedAccount = await executeQuery(
-      'SELECT MaTK, TenDangNhap, TenChuTaiKhoan, QuyenHan FROM TAIKHOAN WHERE MaTK = ?',
+      'SELECT MaTaiKhoan, TenDangNhap, TenChuTaiKhoan, QuyenHan FROM TAIKHOAN WHERE MaTaiKhoan = ?',
       [id]
     );
     
     const account = updatedAccount[0];
     const formattedAccount = {
-      id: account.MaTK,
+      id: account.MaTaiKhoan,
       username: account.TenDangNhap,
       fullName: account.TenChuTaiKhoan,
       role: account.QuyenHan.toLowerCase(),
@@ -195,7 +195,7 @@ router.delete('/:id', authenticate, adminOnly, async (req, res, next) => {
     
     // Check if account exists
     const existingAccount = await executeQuery(
-      'SELECT * FROM TAIKHOAN WHERE MaTK = ?',
+      'SELECT * FROM TAIKHOAN WHERE MaTaiKhoan = ?',
       [id]
     );
     
@@ -209,7 +209,7 @@ router.delete('/:id', authenticate, adminOnly, async (req, res, next) => {
     }
     
     // Delete account
-    await executeQuery('DELETE FROM TAIKHOAN WHERE MaTK = ?', [id]);
+    await executeQuery('DELETE FROM TAIKHOAN WHERE MaTaiKhoan = ?', [id]);
     
     res.json(successResponse(null, 'Xóa tài khoản thành công'));
     

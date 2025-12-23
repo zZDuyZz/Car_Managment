@@ -1,15 +1,14 @@
 import app from './app.js';
-import pool from './config/db.js';
+import getDatabase from './config/db.js';
 
 const PORT = process.env.PORT || 3001;
 
 // Test database connection before starting server
 async function startServer() {
   try {
-    // Test database connection
-    const connection = await pool.getConnection();
-    console.log('✅ Database connection successful');
-    connection.release();
+    // Test SQLite database connection
+    const db = await getDatabase();
+    console.log('✅ SQLite database connection successful');
 
     // Start server
     app.listen(PORT, () => {
@@ -28,13 +27,15 @@ async function startServer() {
 // Handle graceful shutdown
 process.on('SIGTERM', async () => {
   console.log('🛑 SIGTERM received, shutting down gracefully...');
-  await pool.end();
+  const db = await getDatabase();
+  await db.close();
   process.exit(0);
 });
 
 process.on('SIGINT', async () => {
   console.log('🛑 SIGINT received, shutting down gracefully...');
-  await pool.end();
+  const db = await getDatabase();
+  await db.close();
   process.exit(0);
 });
 
