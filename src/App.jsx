@@ -2,6 +2,10 @@ import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate } from 'react-router-dom';
 import LoginPage from './pages/Auth/LoginPage';
 import SignUpPage from './pages/Auth/SignUpPage';
+import StaffLayout from './layouts/StaffLayout';
+import AdminLayout from './layouts/AdminLayout';
+
+// Staff components
 import Customers from './pages/Staff/Customers';
 import Vehicles from './pages/Staff/Vehicles';
 import Repairs from './pages/Staff/Repairs';
@@ -9,14 +13,15 @@ import RepairServices from './pages/Staff/RepairServices';
 import SpareParts from './pages/Staff/SpareParts';
 import Invoices from './pages/Staff/Invoices';
 import Search from './pages/Staff/Search';
+
+// Admin components
 import Accounts from './pages/Admin/Accounts';
-import Employees from './pages/Admin/Employees';
-import AdminCustomers from './pages/Admin/Customers';
-import Services from './pages/Admin/Services';
-import Parts from './pages/Admin/Parts';
-import Statistics from './pages/Admin/Statistics';
-import StaffLayout from './layouts/StaffLayout';
-import AdminLayout from './layouts/AdminLayout';
+import Reception from './pages/Admin/Reception';
+import Payment from './pages/Admin/Payment';
+import Reports from './pages/Admin/Reports';
+import ImportGoods from './pages/Admin/ImportGoods';
+import RepairRegulations from './pages/Admin/RepairRegulations';
+import ReceptionRegulations from './pages/Admin/ReceptionRegulations';
 
 function App() {
     const [isLoggedIn, setIsLoggedIn] = useState(
@@ -34,9 +39,9 @@ function App() {
         setUserRole(role);
         
         if (role === 'admin') {
-            navigate('/admin/accounts');
+            navigate('/admin');
         } else {
-            navigate('/customers');
+            navigate('/staff');
         }
     };
 
@@ -58,25 +63,29 @@ function App() {
             } />
             <Route path="/signup" element={<SignUpPage onSignUpSuccess={handleSignUpSuccess} />} />
             
-            <Route element={<AdminLayout onLogout={handleLogout} />}>
-                <Route path="admin/accounts" element={
-                    isLoggedIn && userRole === 'admin' ? <Accounts /> : <Navigate to="/login" replace />
-                } />
-                <Route path="admin/employees" element={
-                    isLoggedIn && userRole === 'admin' ? <Employees /> : <Navigate to="/login" replace />
-                } />
-                <Route path="admin/customers" element={
-                    isLoggedIn && userRole === 'admin' ? <AdminCustomers /> : <Navigate to="/login" replace />
-                } />
-                <Route path="admin/services" element={
-                    isLoggedIn && userRole === 'admin' ? <Services /> : <Navigate to="/login" replace />
-                } />
-                <Route path="admin/parts" element={
-                    isLoggedIn && userRole === 'admin' ? <Parts /> : <Navigate to="/login" replace />
-                } />
-                <Route path="admin/statistics" element={
-                    isLoggedIn && userRole === 'admin' ? <Statistics /> : <Navigate to="/login" replace />
-                } />
+            {/* Admin Routes */}
+            <Route path="/admin" element={
+                isLoggedIn && userRole === 'admin' ? <AdminLayout onLogout={handleLogout} /> : <Navigate to="/login" replace />
+            }>
+                <Route index element={<Navigate to="/admin/accounts" replace />} />
+                <Route path="accounts" element={<Accounts />} />
+                
+                {/* Reports */}
+                <Route path="reports" element={<Reports />} />
+                
+                {/* Import Goods */}
+                <Route path="import" element={<ImportGoods />} />
+                <Route path="import/new" element={<ImportGoods />} />
+                
+                {/* Regulations */}
+                <Route path="regulations" element={<Navigate to="/admin/regulations/repair" replace />} />
+                <Route path="regulations/repair" element={<RepairRegulations />} />
+                <Route path="regulations/reception" element={<ReceptionRegulations />} />
+                
+                {/* Redirect old routes */}
+                <Route path="reception" element={<Navigate to="/staff/repairs" replace />} />
+                <Route path="payment" element={<Navigate to="/staff/invoices" replace />} />
+                <Route path="*" element={<Navigate to="/admin/accounts" replace />} />
             </Route>
             
             <Route path="/staff" element={
