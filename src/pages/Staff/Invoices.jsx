@@ -2,14 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
-const mockRepairs = [
-  { id: 'R-1702000000000', vehicleId: 1, licensePlate: '51A-12345', owner: 'Nguyễn Văn A', status: 'done', createdAt: '2024-12-10T08:30:00' },
-  { id: 'R-1702000000001', vehicleId: 2, licensePlate: '51B-67890', owner: 'Trần Thị B', status: 'done', createdAt: '2024-12-11T10:15:00' },
-  { id: 'R-1702000000002', vehicleId: 3, licensePlate: '51C-11111', owner: 'Lê Văn C', status: 'repairing', createdAt: '2024-12-12T14:00:00' },
-];
-
 const Invoices = () => {
   const [invoices, setInvoices] = useState([]);
+  const [repairs, setRepairs] = useState([]);
   const [repairServices, setRepairServices] = useState([]);
   const [spareParts, setSpareParts] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -17,14 +12,75 @@ const Invoices = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    const savedInvoices = JSON.parse(localStorage.getItem('invoices')) || [];
-    const savedServices = JSON.parse(localStorage.getItem('repairServices')) || [];
-    const savedParts = JSON.parse(localStorage.getItem('spareParts')) || [];
-    
-    setInvoices(savedInvoices);
-    setRepairServices(savedServices);
-    setSpareParts(savedParts);
+    loadInvoices();
+    loadRepairs();
+    loadRepairServices();
+    loadSpareParts();
   }, []);
+
+  const loadInvoices = async () => {
+    try {
+      // TODO: Replace with real API call when invoices API is ready
+      // const response = await apiService.getInvoices();
+      // if (response.success) {
+      //   setInvoices(response.data);
+      // }
+      
+      // For now, start with empty array (no mock data)
+      setInvoices([]);
+    } catch (error) {
+      console.error('Error loading invoices:', error);
+      setInvoices([]);
+    }
+  };
+
+  const loadRepairs = async () => {
+    try {
+      // TODO: Replace with real API call when repairs API is ready
+      // const response = await apiService.getRepairs();
+      // if (response.success) {
+      //   setRepairs(response.data);
+      // }
+      
+      // For now, start with empty array (no mock data)
+      setRepairs([]);
+    } catch (error) {
+      console.error('Error loading repairs:', error);
+      setRepairs([]);
+    }
+  };
+
+  const loadRepairServices = async () => {
+    try {
+      // TODO: Replace with real API call when repair services API is ready
+      // const response = await apiService.getRepairServices();
+      // if (response.success) {
+      //   setRepairServices(response.data);
+      // }
+      
+      // For now, start with empty array (no mock data)
+      setRepairServices([]);
+    } catch (error) {
+      console.error('Error loading repair services:', error);
+      setRepairServices([]);
+    }
+  };
+
+  const loadSpareParts = async () => {
+    try {
+      // TODO: Replace with real API call when spare parts API is ready
+      // const response = await apiService.getSpareParts();
+      // if (response.success) {
+      //   setSpareParts(response.data);
+      // }
+      
+      // For now, start with empty array (no mock data)
+      setSpareParts([]);
+    } catch (error) {
+      console.error('Error loading spare parts:', error);
+      setSpareParts([]);
+    }
+  };
 
   const getRepairServices = (repairId) => {
     return repairServices.filter(rs => rs.repairId === repairId);
@@ -191,7 +247,7 @@ const Invoices = () => {
     }).format(value);
   };
 
-  const filteredRepairs = mockRepairs.filter(repair => {
+  const filteredRepairs = repairs.filter(repair => {
     return repair.licensePlate.toLowerCase().includes(searchTerm.toLowerCase()) ||
            repair.owner.toLowerCase().includes(searchTerm.toLowerCase());
   });
@@ -219,7 +275,7 @@ const Invoices = () => {
             <div className="space-y-2 max-h-96 overflow-y-auto">
               {completedRepairs.length === 0 ? (
                 <div className="text-center text-gray-500 py-8">
-                  Không có phiếu sửa hoàn thành
+                  Chưa có phiếu sửa hoàn thành. Tạo phiếu sửa chữa và hoàn thành trước.
                 </div>
               ) : (
                 completedRepairs.map(repair => {

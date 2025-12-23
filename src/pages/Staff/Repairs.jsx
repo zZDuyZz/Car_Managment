@@ -2,20 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
-const mockVehicles = [
-  { id: 1, licensePlate: '51A-12345', owner: 'Nguyễn Văn A' },
-  { id: 2, licensePlate: '51B-67890', owner: 'Trần Thị B' },
-  { id: 3, licensePlate: '51C-11111', owner: 'Lê Văn C' },
-];
-
-const mockStaff = [
-  { id: 1, name: 'Nhân viên 1' },
-  { id: 2, name: 'Nhân viên 2' },
-  { id: 3, name: 'Nhân viên 3' },
-];
-
 const Repairs = () => {
   const [repairs, setRepairs] = useState([]);
+  const [vehicles, setVehicles] = useState([]);
+  const [staff, setStaff] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [editingId, setEditingId] = useState(null);
@@ -27,9 +17,58 @@ const Repairs = () => {
   });
 
   useEffect(() => {
-    const savedRepairs = JSON.parse(localStorage.getItem('repairs')) || [];
-    setRepairs(savedRepairs);
+    loadRepairs();
+    loadVehicles();
+    loadStaff();
   }, []);
+
+  const loadRepairs = async () => {
+    try {
+      // TODO: Replace with real API call when repairs API is ready
+      // const response = await apiService.getRepairs();
+      // if (response.success) {
+      //   setRepairs(response.data);
+      // }
+      
+      // For now, start with empty array (no mock data)
+      setRepairs([]);
+    } catch (error) {
+      console.error('Error loading repairs:', error);
+      setRepairs([]);
+    }
+  };
+
+  const loadVehicles = async () => {
+    try {
+      // TODO: Replace with real API call when vehicles API is ready
+      // const response = await apiService.getVehicles();
+      // if (response.success) {
+      //   setVehicles(response.data);
+      // }
+      
+      // For now, start with empty array (no mock data)
+      setVehicles([]);
+    } catch (error) {
+      console.error('Error loading vehicles:', error);
+      setVehicles([]);
+    }
+  };
+
+  const loadStaff = async () => {
+    try {
+      // TODO: Replace with real API call when staff API is ready
+      // const response = await apiService.getStaff();
+      // if (response.success) {
+      //   setStaff(response.data);
+      // }
+      
+      // For now, start with empty array (no mock data)
+      setStaff([]);
+    } catch (error) {
+      console.error('Error loading staff:', error);
+      setStaff([]);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -135,7 +174,7 @@ const Repairs = () => {
   };
 
   const filteredRepairs = repairs.filter(repair => {
-    const vehicle = mockVehicles.find(v => v.id.toString() === repair.vehicleId);
+    const vehicle = vehicles.find(v => v.id.toString() === repair.vehicleId);
     return vehicle?.licensePlate.toLowerCase().includes(searchTerm.toLowerCase()) ||
            vehicle?.owner.toLowerCase().includes(searchTerm.toLowerCase());
   });
@@ -164,7 +203,7 @@ const Repairs = () => {
 
       {filteredRepairs.length === 0 ? (
         <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
-          Chưa có phiếu sửa chữa nào
+          Chưa có phiếu sửa chữa nào. Thêm xe và nhân viên trước, sau đó tạo phiếu sửa chữa.
         </div>
       ) : (
         <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -181,8 +220,8 @@ const Repairs = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredRepairs.map((repair) => {
-                const vehicle = mockVehicles.find(v => v.id.toString() === repair.vehicleId) || {};
-                const staff = mockStaff.find(s => s.id.toString() === repair.staffId) || {};
+                const vehicle = vehicles.find(v => v.id.toString() === repair.vehicleId) || {};
+                const staffMember = staff.find(s => s.id.toString() === repair.staffId) || {};
                 
                 return (
                   <tr key={repair.id} className="hover:bg-gray-50">
@@ -191,7 +230,7 @@ const Repairs = () => {
                       <div>{vehicle.licensePlate}</div>
                       <div className="text-gray-400 text-xs">{vehicle.owner}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{staff.name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{staffMember.name}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {format(new Date(repair.createdAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
                     </td>
@@ -239,7 +278,7 @@ const Repairs = () => {
                       required
                     >
                       <option value="">Chọn xe</option>
-                      {mockVehicles.map(vehicle => (
+                      {vehicles.map(vehicle => (
                         <option key={vehicle.id} value={vehicle.id}>
                           {vehicle.licensePlate} - {vehicle.owner}
                         </option>
@@ -256,8 +295,8 @@ const Repairs = () => {
                       required
                     >
                       <option value="">Chọn nhân viên</option>
-                      {mockStaff.map(staff => (
-                        <option key={staff.id} value={staff.id}>{staff.name}</option>
+                      {staff.map(staffMember => (
+                        <option key={staffMember.id} value={staffMember.id}>{staffMember.name}</option>
                       ))}
                     </select>
                   </div>

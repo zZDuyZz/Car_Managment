@@ -2,22 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
-const mockSpareParts = [
-  { id: 1, name: 'Lốp xe', unitPrice: 800000, stock: 10 },
-  { id: 2, name: 'Dầu nhớt', unitPrice: 150000, stock: 50 },
-  { id: 3, name: 'Bộ phanh', unitPrice: 500000, stock: 8 },
-  { id: 4, name: 'Bộ lọc không khí', unitPrice: 200000, stock: 15 },
-  { id: 5, name: 'Ắc quy', unitPrice: 1200000, stock: 5 },
-  { id: 6, name: 'Dây curoa', unitPrice: 300000, stock: 12 },
-];
-
-const mockRepairs = [
-  { id: 'R-1702000000000', vehicleId: 1, licensePlate: '51A-12345', owner: 'Nguyễn Văn A', status: 'pending', createdAt: '2024-12-10T08:30:00' },
-  { id: 'R-1702000000001', vehicleId: 2, licensePlate: '51B-67890', owner: 'Trần Thị B', status: 'repairing', createdAt: '2024-12-11T10:15:00' },
-];
-
 const SpareParts = () => {
   const [spareParts, setSpareParts] = useState([]);
+  const [repairs, setRepairs] = useState([]);
+  const [availableParts, setAvailableParts] = useState([]);
   const [selectedRepair, setSelectedRepair] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -28,15 +16,64 @@ const SpareParts = () => {
   const [stockError, setStockError] = useState('');
 
   useEffect(() => {
-    const savedSpareParts = JSON.parse(localStorage.getItem('spareParts')) || [];
-    setSpareParts(savedSpareParts);
+    loadSpareParts();
+    loadRepairs();
+    loadAvailableParts();
   }, []);
+
+  const loadSpareParts = async () => {
+    try {
+      // TODO: Replace with real API call when spare parts API is ready
+      // const response = await apiService.getSpareParts();
+      // if (response.success) {
+      //   setSpareParts(response.data);
+      // }
+      
+      // For now, start with empty array (no mock data)
+      setSpareParts([]);
+    } catch (error) {
+      console.error('Error loading spare parts:', error);
+      setSpareParts([]);
+    }
+  };
+
+  const loadRepairs = async () => {
+    try {
+      // TODO: Replace with real API call when repairs API is ready
+      // const response = await apiService.getRepairs();
+      // if (response.success) {
+      //   setRepairs(response.data);
+      // }
+      
+      // For now, start with empty array (no mock data)
+      setRepairs([]);
+    } catch (error) {
+      console.error('Error loading repairs:', error);
+      setRepairs([]);
+    }
+  };
+
+  const loadAvailableParts = async () => {
+    try {
+      // TODO: Replace with real API call when available parts API is ready
+      // const response = await apiService.getAvailableParts();
+      // if (response.success) {
+      //   setAvailableParts(response.data);
+      // }
+      
+      // For now, start with empty array (no mock data)
+      setAvailableParts([]);
+    } catch (error) {
+      console.error('Error loading available parts:', error);
+      setAvailableParts([]);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     
     if (name === 'quantity') {
-      const selectedPart = mockSpareParts.find(p => p.id.toString() === formData.sparePartId);
+      const selectedPart = availableParts.find(p => p.id.toString() === formData.sparePartId);
       const qty = parseInt(value);
       
       if (selectedPart && qty > selectedPart.stock) {
@@ -57,7 +94,7 @@ const SpareParts = () => {
       return;
     }
 
-    const selectedPart = mockSpareParts.find(p => p.id.toString() === formData.sparePartId);
+    const selectedPart = availableParts.find(p => p.id.toString() === formData.sparePartId);
     const qty = parseInt(formData.quantity);
 
     if (qty > selectedPart.stock) {
@@ -91,12 +128,12 @@ const SpareParts = () => {
     localStorage.setItem('spareParts', JSON.stringify(updatedSpareParts));
     
     // Update stock
-    const updatedStock = mockSpareParts.map(p => 
+    const updatedStock = availableParts.map(p => 
       p.id.toString() === formData.sparePartId 
         ? { ...p, stock: p.stock - qty }
         : p
     );
-    localStorage.setItem('sparePartsStock', JSON.stringify(updatedStock));
+    setAvailableParts(updatedStock);
     
     setIsModalOpen(false);
     setFormData({
@@ -115,21 +152,21 @@ const SpareParts = () => {
       localStorage.setItem('spareParts', JSON.stringify(updatedSpareParts));
       
       // Restore stock
-      const updatedStock = mockSpareParts.map(p => 
+      const updatedStock = availableParts.map(p => 
         p.id.toString() === partToDelete.sparePartId 
           ? { ...p, stock: p.stock + partToDelete.quantity }
           : p
       );
-      localStorage.setItem('sparePartsStock', JSON.stringify(updatedStock));
+      setAvailableParts(updatedStock);
     }
   };
 
-  const filteredRepairs = mockRepairs.filter(repair => {
+  const filteredRepairs = repairs.filter(repair => {
     return repair.licensePlate.toLowerCase().includes(searchTerm.toLowerCase()) ||
            repair.owner.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
-  const selectedRepairData = mockRepairs.find(r => r.id === selectedRepair);
+  const selectedRepairData = repairs.find(r => r.id === selectedRepair);
   const repairPartsList = spareParts.filter(sp => sp.repairId === selectedRepair);
   const totalAmount = repairPartsList.reduce((sum, sp) => sum + sp.totalPrice, 0);
 
@@ -141,7 +178,7 @@ const SpareParts = () => {
   };
 
   const getAvailableStock = (sparePartId) => {
-    const part = mockSpareParts.find(p => p.id.toString() === sparePartId);
+    const part = availableParts.find(p => p.id.toString() === sparePartId);
     return part ? part.stock : 0;
   };
 
@@ -164,7 +201,12 @@ const SpareParts = () => {
               />
             </div>
             <div className="space-y-2 max-h-96 overflow-y-auto">
-              {filteredRepairs.map(repair => (
+              {filteredRepairs.length === 0 ? (
+                <div className="text-center text-gray-500 py-8">
+                  Chưa có phiếu sửa nào. Tạo phiếu sửa chữa trước.
+                </div>
+              ) : (
+                filteredRepairs.map(repair => (
                 <button
                   key={repair.id}
                   onClick={() => setSelectedRepair(repair.id)}
@@ -279,7 +321,7 @@ const SpareParts = () => {
                     required
                   >
                     <option value="">Chọn phụ tùng</option>
-                    {mockSpareParts.map(part => (
+                    {availableParts.map(part => (
                       <option key={part.id} value={part.id}>
                         {part.name} - {formatCurrency(part.unitPrice)} (Tồn: {part.stock})
                       </option>

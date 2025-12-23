@@ -20,43 +20,43 @@ const Vehicles = () => {
     engineNumber: ''
   });
 
-  // Mock data
+  // Load real data from API instead of mock data
   useEffect(() => {
-    const mockCustomers = [
-      { id: 'KH001', name: 'Nguyễn Văn A', phone: '0912345678' },
-      { id: 'KH002', name: 'Trần Thị B', phone: '0987654321' },
-    ];
-    
-    const mockVehicles = [
-      { 
-        id: 'XE001', 
-        customerId: 'KH001',
-        licensePlate: '51A-12345', 
-        brand: 'Toyota', 
-        model: 'Vios', 
-        year: 2020,
-        color: 'Trắng',
-        vin: 'JTDKB20U977676543',
-        engineNumber: '3SZVE53B767254321',
-        createdAt: '2023-01-15'
-      },
-      { 
-        id: 'XE002', 
-        customerId: 'KH002',
-        licensePlate: '51B-54321', 
-        brand: 'Honda', 
-        model: 'City', 
-        year: 2021,
-        color: 'Đen',
-        vin: 'MHKM5EA3J0K123456',
-        engineNumber: 'L15B123456789',
-        createdAt: '2023-02-20'
-      }
-    ];
-    
-    setCustomers(mockCustomers);
-    setVehicles(mockVehicles);
+    loadVehicles();
+    loadCustomers();
   }, []);
+
+  const loadVehicles = async () => {
+    try {
+      // TODO: Replace with real API call when vehicles API is ready
+      // const response = await apiService.getVehicles();
+      // if (response.success) {
+      //   setVehicles(response.data);
+      // }
+      
+      // For now, start with empty array (no mock data)
+      setVehicles([]);
+    } catch (error) {
+      console.error('Error loading vehicles:', error);
+      setVehicles([]);
+    }
+  };
+
+  const loadCustomers = async () => {
+    try {
+      // TODO: Replace with real API call when customers API is ready
+      // const response = await apiService.getCustomers();
+      // if (response.success) {
+      //   setCustomers(response.data);
+      // }
+      
+      // For now, start with empty array (no mock data)
+      setCustomers([]);
+    } catch (error) {
+      console.error('Error loading customers:', error);
+      setCustomers([]);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -203,7 +203,7 @@ const Vehicles = () => {
               ) : (
                 <tr>
                   <td colSpan="7" className="px-6 py-4 text-center text-sm text-gray-500">
-                    Không tìm thấy xe nào
+                    Chưa có xe nào. Thêm khách hàng trước, sau đó thêm xe mới.
                   </td>
                 </tr>
               )}

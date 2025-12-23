@@ -13,6 +13,7 @@
     "test:mysql": "node server/test-simple.js",
     "test:sqlite": "node server/test-sqlite.js",
     "setup:admin": "node server/setup-admin.js",
+    "cleanup:admin": "node server/cleanup-admin.js",
     "dev:full": "concurrently \"npm run dev\" \"npm run server:dev\" --names \"FRONTEND,BACKEND\" --prefix-colors \"cyan,yellow\"",
     "start": "npm run dev:full"
   },

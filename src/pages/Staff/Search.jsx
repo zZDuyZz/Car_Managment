@@ -2,20 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
-const mockCustomers = [
-  { id: 1, name: 'Nguyễn Văn A', phone: '0901234567' },
-  { id: 2, name: 'Trần Thị B', phone: '0912345678' },
-  { id: 3, name: 'Lê Văn C', phone: '0923456789' },
-];
-
-const mockVehicles = [
-  { id: 1, licensePlate: '51A-12345', owner: 'Nguyễn Văn A' },
-  { id: 2, licensePlate: '51B-67890', owner: 'Trần Thị B' },
-  { id: 3, licensePlate: '51C-11111', owner: 'Lê Văn C' },
-];
-
 const Search = () => {
   const [repairs, setRepairs] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [vehicles, setVehicles] = useState([]);
   const [repairServices, setRepairServices] = useState([]);
   const [spareParts, setSpareParts] = useState([]);
   const [invoices, setInvoices] = useState([]);
@@ -30,17 +20,33 @@ const Search = () => {
   });
 
   useEffect(() => {
-    const savedRepairs = JSON.parse(localStorage.getItem('repairs')) || [];
-    const savedServices = JSON.parse(localStorage.getItem('repairServices')) || [];
-    const savedParts = JSON.parse(localStorage.getItem('spareParts')) || [];
-    const savedInvoices = JSON.parse(localStorage.getItem('invoices')) || [];
-
-    setRepairs(savedRepairs);
-    setRepairServices(savedServices);
-    setSpareParts(savedParts);
-    setInvoices(savedInvoices);
-    setFilteredRepairs(savedRepairs);
+    loadAllData();
   }, []);
+
+  const loadAllData = async () => {
+    try {
+      // TODO: Replace with real API calls when APIs are ready
+      // const [repairsRes, customersRes, vehiclesRes, servicesRes, partsRes, invoicesRes] = await Promise.all([
+      //   apiService.getRepairs(),
+      //   apiService.getCustomers(),
+      //   apiService.getVehicles(),
+      //   apiService.getRepairServices(),
+      //   apiService.getSpareParts(),
+      //   apiService.getInvoices()
+      // ]);
+      
+      // For now, start with empty arrays (no mock data)
+      setRepairs([]);
+      setCustomers([]);
+      setVehicles([]);
+      setRepairServices([]);
+      setSpareParts([]);
+      setInvoices([]);
+      setFilteredRepairs([]);
+    } catch (error) {
+      console.error('Error loading data:', error);
+    }
+  };
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -69,7 +75,7 @@ const Search = () => {
 
     // Filter by license plate
     if (filters.licensePlate) {
-      const vehicle = mockVehicles.find(v => v.licensePlate.toLowerCase().includes(filters.licensePlate.toLowerCase()));
+      const vehicle = vehicles.find(v => v.licensePlate.toLowerCase().includes(filters.licensePlate.toLowerCase()));
       if (vehicle) {
         results = results.filter(r => r.vehicleId === vehicle.id);
       } else {
@@ -130,7 +136,7 @@ const Search = () => {
   };
 
   const getVehicleInfo = (vehicleId) => {
-    return mockVehicles.find(v => v.id === vehicleId) || {};
+    return vehicles.find(v => v.id === vehicleId) || {};
   };
 
   return (
@@ -170,7 +176,7 @@ const Search = () => {
               className="w-full p-2 border rounded"
             >
               <option value="">Tất cả</option>
-              {mockCustomers.map(customer => (
+              {customers.map(customer => (
                 <option key={customer.id} value={customer.id}>
                   {customer.name}
                 </option>
@@ -214,7 +220,7 @@ const Search = () => {
             <div className="space-y-2 max-h-96 overflow-y-auto">
               {filteredRepairs.length === 0 ? (
                 <div className="text-center text-gray-500 py-8">
-                  Không tìm thấy phiếu sửa
+                  Chưa có dữ liệu để tra cứu. Tạo phiếu sửa chữa trước.
                 </div>
               ) : (
                 filteredRepairs.map(repair => {

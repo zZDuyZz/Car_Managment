@@ -2,22 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
-const mockServices = [
-  { id: 1, name: 'Thay dầu', unitPrice: 150000 },
-  { id: 2, name: 'Thay lốp', unitPrice: 500000 },
-  { id: 3, name: 'Sửa phanh', unitPrice: 300000 },
-  { id: 4, name: 'Sửa động cơ', unitPrice: 1000000 },
-  { id: 5, name: 'Sửa hộp số', unitPrice: 800000 },
-  { id: 6, name: 'Sửa điều hòa', unitPrice: 400000 },
-];
-
-const mockRepairs = [
-  { id: 'R-1702000000000', vehicleId: 1, licensePlate: '51A-12345', owner: 'Nguyễn Văn A', status: 'pending', createdAt: '2024-12-10T08:30:00' },
-  { id: 'R-1702000000001', vehicleId: 2, licensePlate: '51B-67890', owner: 'Trần Thị B', status: 'repairing', createdAt: '2024-12-11T10:15:00' },
-];
-
 const RepairServices = () => {
   const [repairServices, setRepairServices] = useState([]);
+  const [repairs, setRepairs] = useState([]);
+  const [services, setServices] = useState([]);
   const [selectedRepair, setSelectedRepair] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -27,9 +15,58 @@ const RepairServices = () => {
   });
 
   useEffect(() => {
-    const savedServices = JSON.parse(localStorage.getItem('repairServices')) || [];
-    setRepairServices(savedServices);
+    loadRepairServices();
+    loadRepairs();
+    loadServices();
   }, []);
+
+  const loadRepairServices = async () => {
+    try {
+      // TODO: Replace with real API call when repair services API is ready
+      // const response = await apiService.getRepairServices();
+      // if (response.success) {
+      //   setRepairServices(response.data);
+      // }
+      
+      // For now, start with empty array (no mock data)
+      setRepairServices([]);
+    } catch (error) {
+      console.error('Error loading repair services:', error);
+      setRepairServices([]);
+    }
+  };
+
+  const loadRepairs = async () => {
+    try {
+      // TODO: Replace with real API call when repairs API is ready
+      // const response = await apiService.getRepairs();
+      // if (response.success) {
+      //   setRepairs(response.data);
+      // }
+      
+      // For now, start with empty array (no mock data)
+      setRepairs([]);
+    } catch (error) {
+      console.error('Error loading repairs:', error);
+      setRepairs([]);
+    }
+  };
+
+  const loadServices = async () => {
+    try {
+      // TODO: Replace with real API call when services API is ready
+      // const response = await apiService.getServices();
+      // if (response.success) {
+      //   setServices(response.data);
+      // }
+      
+      // For now, start with empty array (no mock data)
+      setServices([]);
+    } catch (error) {
+      console.error('Error loading services:', error);
+      setServices([]);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -44,7 +81,7 @@ const RepairServices = () => {
       return;
     }
 
-    const selectedService = mockServices.find(s => s.id.toString() === formData.serviceId);
+    const selectedService = services.find(s => s.id.toString() === formData.serviceId);
     
     // Check if service already exists for this repair
     const serviceExists = repairServices.some(
@@ -83,12 +120,12 @@ const RepairServices = () => {
     localStorage.setItem('repairServices', JSON.stringify(updatedServices));
   };
 
-  const filteredRepairs = mockRepairs.filter(repair => {
+  const filteredRepairs = repairs.filter(repair => {
     return repair.licensePlate.toLowerCase().includes(searchTerm.toLowerCase()) ||
            repair.owner.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
-  const selectedRepairData = mockRepairs.find(r => r.id === selectedRepair);
+  const selectedRepairData = repairs.find(r => r.id === selectedRepair);
   const repairServicesList = repairServices.filter(rs => rs.repairId === selectedRepair);
   const totalAmount = repairServicesList.reduce((sum, rs) => sum + rs.totalPrice, 0);
 
@@ -118,7 +155,12 @@ const RepairServices = () => {
               />
             </div>
             <div className="space-y-2 max-h-96 overflow-y-auto">
-              {filteredRepairs.map(repair => (
+              {filteredRepairs.length === 0 ? (
+                <div className="text-center text-gray-500 py-8">
+                  Chưa có phiếu sửa nào. Tạo phiếu sửa chữa trước.
+                </div>
+              ) : (
+                filteredRepairs.map(repair => (
                 <button
                   key={repair.id}
                   onClick={() => setSelectedRepair(repair.id)}
@@ -233,7 +275,7 @@ const RepairServices = () => {
                     required
                   >
                     <option value="">Chọn dịch vụ</option>
-                    {mockServices.map(service => (
+                    {services.map(service => (
                       <option key={service.id} value={service.id}>
                         {service.name} - {formatCurrency(service.unitPrice)}
                       </option>
