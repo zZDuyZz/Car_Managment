@@ -18,10 +18,20 @@ const Customers = () => {
     loadCustomers();
   }, []);
 
-  const loadCustomers = async () => {
+  // Debounce search - call API after user stops typing for 500ms
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      loadCustomers(searchTerm);
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
+
+  const loadCustomers = async (search = '') => {
     try {
       setLoading(true);
-      const response = await apiService.getCustomers();
+      const params = search ? { search } : {};
+      const response = await apiService.getCustomers(params);
       if (response.success) {
         setCustomers(response.data);
       }
@@ -87,13 +97,6 @@ const Customers = () => {
     setEditingCustomer(null);
     setShowForm(false);
   };
-
-  // Filter customers based on search term
-  const filteredCustomers = customers.filter(customer => 
-    customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.phone.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (customer.address && customer.address.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
 
   if (loading) {
     return (
@@ -215,7 +218,7 @@ const Customers = () => {
             {customers.length === 0 ? (
               <tr>
                 <td colSpan="4" className="px-6 py-8 text-center text-gray-500">
-                  Chưa có khách hàng nào. Nhấn "Thêm khách hàng" để bắt đầu.
+                  {searchTerm ? 'Không tìm thấy khách hàng nào.' : 'Chưa có khách hàng nào. Nhấn "Thêm khách hàng" để bắt đầu.'}
                 </td>
               </tr>
             ) : (

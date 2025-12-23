@@ -25,10 +25,20 @@ const Vehicles = () => {
     loadCustomers();
   }, []);
 
-  const loadVehicles = async () => {
+  // Debounce search - call API after user stops typing for 500ms
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      loadVehicles(searchTerm);
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
+
+  const loadVehicles = async (search = '') => {
     try {
       setLoading(true);
-      const response = await apiService.getVehicles();
+      const params = search ? { search } : {};
+      const response = await apiService.getVehicles(params);
       if (response.success) {
         setVehicles(response.data);
       }
@@ -130,13 +140,6 @@ const Vehicles = () => {
     return customer ? `${customer.name} (${customer.phone})` : 'Không xác định';
   };
 
-  const filteredVehicles = vehicles.filter(vehicle => 
-    vehicle.licensePlate.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    vehicle.ownerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (vehicle.vehicleType && vehicle.vehicleType.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    getCustomerName(vehicle.customerId, vehicle.customerName, vehicle.customerPhone).toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -188,8 +191,8 @@ const Vehicles = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredVehicles.length > 0 ? (
-                filteredVehicles.map((vehicle) => (
+              {vehicles.length > 0 ? (
+                vehicles.map((vehicle) => (
                   <tr key={vehicle.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
                       {vehicle.licensePlate}
@@ -233,7 +236,7 @@ const Vehicles = () => {
               ) : (
                 <tr>
                   <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
-                    Chưa có xe nào. Nhấn "Thêm xe mới" để bắt đầu.
+                    {searchTerm ? 'Không tìm thấy xe nào.' : 'Chưa có xe nào. Nhấn "Thêm xe mới" để bắt đầu.'}
                   </td>
                 </tr>
               )}

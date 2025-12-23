@@ -10,7 +10,9 @@ router.use(authenticate);
 // GET /api/vehicles - Get all vehicles with customer info
 router.get('/', async (req, res) => {
   try {
-    const vehicles = await executeQuery(`
+    const { search } = req.query;
+    
+    let query = `
       SELECT 
         x.MaXe,
         x.BienSoXe,
@@ -24,8 +26,19 @@ router.get('/', async (req, res) => {
         k.SoDienThoai
       FROM XE x
       LEFT JOIN KHACHHANG k ON x.MaKhachHang = k.MaKhachHang
-      ORDER BY x.NgayTao DESC
-    `);
+    `;
+    
+    let params = [];
+    
+    if (search) {
+      query += ` WHERE x.BienSoXe LIKE ? OR x.TenChuXe LIKE ? OR x.LoaiXe LIKE ? OR x.MauXe LIKE ? OR k.TenKhachHang LIKE ? OR k.SoDienThoai LIKE ?`;
+      const searchTerm = `%${search}%`;
+      params = [searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm];
+    }
+    
+    query += ' ORDER BY x.NgayTao DESC';
+    
+    const vehicles = await executeQuery(query, params);
     
     res.json({
       success: true,

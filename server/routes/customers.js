@@ -10,7 +10,20 @@ router.use(authenticate);
 // GET /api/customers - Get all customers
 router.get('/', async (req, res) => {
   try {
-    const customers = await executeQuery('SELECT * FROM KHACHHANG ORDER BY NgayTao DESC');
+    const { search } = req.query;
+    
+    let query = 'SELECT * FROM KHACHHANG';
+    let params = [];
+    
+    if (search) {
+      query += ' WHERE TenKhachHang LIKE ? OR SoDienThoai LIKE ? OR DiaChi LIKE ?';
+      const searchTerm = `%${search}%`;
+      params = [searchTerm, searchTerm, searchTerm];
+    }
+    
+    query += ' ORDER BY NgayTao DESC';
+    
+    const customers = await executeQuery(query, params);
     
     res.json({
       success: true,
