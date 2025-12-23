@@ -82,20 +82,8 @@ const AdminLayout = ({ onLogout }) => {
       {/* Main content */}
       <div className="flex-1 md:ml-64 p-6">
         <div className="bg-white rounded-lg shadow p-6">
-          {/* Action Buttons - Moved to top right */}
-          <div className="flex justify-end mb-6 space-x-4">
-            {activeTab === 'import' && (
-              <button
-                onClick={() => navigate('/admin/import/new')}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded shadow transition-colors"
-              >
-                + Nhập hàng mới
-              </button>
-            )}
-          </div>
-          
           {/* Main Content */}
-          <div className="mt-4">
+          <div>
             <Outlet />
           </div>
         </div>
