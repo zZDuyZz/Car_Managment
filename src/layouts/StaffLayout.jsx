@@ -156,18 +156,6 @@ const StaffLayout = ({ onLogout }) => {
 
                     <div className="bg-white rounded-lg shadow p-6">
                         <Outlet />
-
-                        {/* Action Buttons - Only show for repairs tab */}
-                        {activeTab === 'repairs' && (
-                            <div className="fixed bottom-6 right-6">
-                                <button
-                                    onClick={() => navigate('/staff/repairs/new')}
-                                    className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded shadow"
-                                >
-                                    + Tạo phiếu sửa
-                                </button>
-                            </div>
-                        )}
                     </div>
                 </div>
             </div>
