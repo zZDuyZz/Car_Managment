@@ -16,12 +16,9 @@ import Search from './pages/Staff/Search';
 
 // Admin components
 import Accounts from './pages/Admin/Accounts';
-import Reception from './pages/Admin/Reception';
-import Payment from './pages/Admin/Payment';
 import Reports from './pages/Admin/Reports';
 import ImportGoods from './pages/Admin/ImportGoods';
-import RepairRegulations from './pages/Admin/RepairRegulations';
-import ReceptionRegulations from './pages/Admin/ReceptionRegulations';
+import AdminSettings from './pages/Admin/AdminSettings';
 
 function App() {
     const [isLoggedIn, setIsLoggedIn] = useState(
@@ -75,16 +72,11 @@ function App() {
                 
                 {/* Import Goods */}
                 <Route path="import" element={<ImportGoods />} />
-                <Route path="import/new" element={<ImportGoods />} />
                 
-                {/* Regulations */}
-                <Route path="regulations" element={<Navigate to="/admin/regulations/repair" replace />} />
-                <Route path="regulations/repair" element={<RepairRegulations />} />
-                <Route path="regulations/reception" element={<ReceptionRegulations />} />
+                {/* Settings */}
+                <Route path="settings" element={<AdminSettings />} />
+
                 
-                {/* Redirect old routes */}
-                <Route path="reception" element={<Navigate to="/staff/repairs" replace />} />
-                <Route path="payment" element={<Navigate to="/staff/invoices" replace />} />
                 <Route path="*" element={<Navigate to="/admin/accounts" replace />} />
             </Route>
             

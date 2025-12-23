@@ -13,13 +13,8 @@ const AdminLayout = ({ onLogout }) => {
     else if (path.includes('reception')) setActiveTab('reception');
     else if (path.includes('reports')) setActiveTab('reports');
     else if (path.includes('import')) setActiveTab('import');
-    else if (path.includes('regulations')) setActiveTab('regulations');
+    else if (path.includes('settings')) setActiveTab('settings');
   }, [location]);
-
-  const handleTabChange = (newValue) => {
-    setActiveTab(newValue);
-    navigate(`/admin/${newValue}`);
-  };
 
   const isActive = (path) => location.pathname.includes(path);
 
@@ -66,10 +61,10 @@ const AdminLayout = ({ onLogout }) => {
           />
           
           <NavItem
-            to="/admin/regulations"
+            to="/admin/settings"
             label="Thay đổi quy định"
-            active={isActive('/admin/regulations')}
-            onClick={() => setActiveTab('regulations')}
+            active={isActive('/admin/settings')}
+            onClick={() => setActiveTab('settings')}
           />
         </nav>
 
@@ -85,63 +80,23 @@ const AdminLayout = ({ onLogout }) => {
       </div>
 
       {/* Main content */}
-      <div className="flex-1 md:ml-64">
-        <div className="p-4">
-          {/* Tabs Navigation */}
-          <div className="border-b border-gray-200 mb-6">
-            <nav className="flex space-x-1" aria-label="Tabs">
-              {activeTab === 'regulations' && (
-                <>
-                  <button
-                    onClick={() => handleTabChange('repair-regulations')}
-                    className={`px-4 py-2 text-sm font-medium rounded-t-lg ${
-                      isActive('repair-regulations')
-                        ? 'bg-white text-blue-600 border-t border-l border-r border-gray-200'
-                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                    }`}
-                  >
-                    Quy định sửa chữa
-                  </button>
-                  <button
-                    onClick={() => handleTabChange('reception-regulations')}
-                    className={`px-4 py-2 text-sm font-medium rounded-t-lg ${
-                      isActive('reception-regulations')
-                        ? 'bg-white text-blue-600 border-t border-l border-r border-gray-200'
-                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                    }`}
-                  >
-                    Quy định tiếp nhận
-                  </button>
-                </>
-              )}
-              
-              {['accounts', 'reports', 'import'].includes(activeTab) && (
-                <div className="px-4 py-2 text-sm font-medium text-gray-700">
-                  {activeTab === 'accounts' && 'Danh sách tài khoản'}
-                  {activeTab === 'reports' && 'Báo cáo thống kê'}
-                  {activeTab === 'import' && 'Nhập hàng'}
-                </div>
-              )}
-            </nav>
+      <div className="flex-1 md:ml-64 p-6">
+        <div className="bg-white rounded-lg shadow p-6">
+          {/* Action Buttons - Moved to top right */}
+          <div className="flex justify-end mb-6 space-x-4">
+            {activeTab === 'import' && (
+              <button
+                onClick={() => navigate('/admin/import/new')}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded shadow transition-colors"
+              >
+                + Nhập hàng mới
+              </button>
+            )}
           </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            {/* Action Buttons - Moved to top right */}
-            <div className="flex justify-end mb-6 space-x-4">
-              {activeTab === 'import' && (
-                <button
-                  onClick={() => navigate('/admin/import/new')}
-                  className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded shadow transition-colors"
-                >
-                  + Nhập hàng mới
-                </button>
-              )}
-            </div>
-            
-            {/* Main Content */}
-            <div className="mt-4">
-              <Outlet />
-            </div>
+          
+          {/* Main Content */}
+          <div className="mt-4">
+            <Outlet />
           </div>
         </div>
       </div>
