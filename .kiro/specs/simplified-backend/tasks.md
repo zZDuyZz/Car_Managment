@@ -13,7 +13,7 @@ Tạo backend API đơn giản với Express.js để kết nối frontend React
   - _Requirements: 1.1, 1.2, 1.4_
 
 - [-] 2. Database Connection & Basic Setup
-  - [ ] 2.1 Cấu hình database connection pool
+  - [x] 2.1 Cấu hình database connection pool
     - Sử dụng lại config/db.js hiện có
     - Thêm error handling và retry logic
     - _Requirements: 8.1, 8.4_
