@@ -79,29 +79,48 @@ function App() {
                 } />
             </Route>
             
-            <Route element={<StaffLayout onLogout={handleLogout} />}>
-                <Route path="customers" element={
-                    isLoggedIn && userRole === 'staff' ? <Customers /> : <Navigate to="/login" replace />
-                } />
-                <Route path="vehicles" element={
-                    isLoggedIn && userRole === 'staff' ? <Vehicles /> : <Navigate to="/login" replace />
-                } />
-                <Route path="repairs" element={
-                    isLoggedIn && userRole === 'staff' ? <Repairs /> : <Navigate to="/login" replace />
-                } />
-                <Route path="repair-services" element={
-                    isLoggedIn && userRole === 'staff' ? <RepairServices /> : <Navigate to="/login" replace />
-                } />
-                <Route path="spare-parts" element={
-                    isLoggedIn && userRole === 'staff' ? <SpareParts /> : <Navigate to="/login" replace />
-                } />
-                <Route path="invoices" element={
-                    isLoggedIn && userRole === 'staff' ? <Invoices /> : <Navigate to="/login" replace />
-                } />
-                <Route path="search" element={
-                    isLoggedIn && userRole === 'staff' ? <Search /> : <Navigate to="/login" replace />
-                } />
+            <Route path="/staff" element={
+                isLoggedIn && userRole === 'staff' ? <StaffLayout onLogout={handleLogout} /> : <Navigate to="/login" replace />
+            }>
+                <Route index element={<Navigate to="/staff/customers" replace />} />
+                <Route path="dashboard" element={<div>Dashboard Content</div>} />
+                <Route path="customers" element={<Customers />} />
+                <Route path="vehicles" element={<Vehicles />} />
+                <Route path="repairs" element={<Repairs />} />
+                <Route path="services" element={<RepairServices />} />
+                <Route path="parts" element={<SpareParts />} />
+                <Route path="invoices" element={<Invoices />} />
+                <Route path="search" element={<Search />} />
+                
+                {/* New item routes */}
+                <Route path="customers/new" element={<div>New Customer Form</div>} />
+                <Route path="vehicles/new" element={<div>New Vehicle Form</div>} />
+                <Route path="repairs/new" element={<div>New Repair Form</div>} />
+                <Route path="invoices/new" element={<div>New Invoice Form</div>} />
             </Route>
+            
+            {/* Redirect old routes to new /staff paths */}
+            <Route path="/customers" element={
+                isLoggedIn && userRole === 'staff' ? <Navigate to="/staff/customers" replace /> : <Navigate to="/login" replace />
+            } />
+            <Route path="/vehicles" element={
+                isLoggedIn && userRole === 'staff' ? <Navigate to="/staff/vehicles" replace /> : <Navigate to="/login" replace />
+            } />
+            <Route path="/repairs" element={
+                isLoggedIn && userRole === 'staff' ? <Navigate to="/staff/repairs" replace /> : <Navigate to="/login" replace />
+            } />
+            <Route path="/repair-services" element={
+                isLoggedIn && userRole === 'staff' ? <Navigate to="/staff/services" replace /> : <Navigate to="/login" replace />
+            } />
+            <Route path="/spare-parts" element={
+                isLoggedIn && userRole === 'staff' ? <Navigate to="/staff/parts" replace /> : <Navigate to="/login" replace />
+            } />
+            <Route path="/invoices" element={
+                isLoggedIn && userRole === 'staff' ? <Navigate to="/staff/invoices" replace /> : <Navigate to="/login" replace />
+            } />
+            <Route path="/search" element={
+                isLoggedIn && userRole === 'staff' ? <Navigate to="/staff/search" replace /> : <Navigate to="/login" replace />
+            } />
             
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="*" element={<Navigate to="/login" replace />} />
