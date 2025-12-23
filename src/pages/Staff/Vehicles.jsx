@@ -1,26 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { PlusCircle, Search, Edit2, X, Car, User } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { PlusCircle, Search, Edit2, X, Car, User, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import apiService from '../../services/api.js';
 
 const Vehicles = () => {
   const [vehicles, setVehicles] = useState([]);
   const [customers, setCustomers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState(null);
   const [formData, setFormData] = useState({
     customerId: '',
     licensePlate: '',
-    brand: '',
-    model: '',
-    year: new Date().getFullYear(),
+    ownerName: '',
+    vehicleType: '',
     color: '',
-    vin: '',
-    engineNumber: ''
+    year: new Date().getFullYear()
   });
 
-  // Load real data from API instead of mock data
   useEffect(() => {
     loadVehicles();
     loadCustomers();
@@ -28,30 +27,25 @@ const Vehicles = () => {
 
   const loadVehicles = async () => {
     try {
-      // TODO: Replace with real API call when vehicles API is ready
-      // const response = await apiService.getVehicles();
-      // if (response.success) {
-      //   setVehicles(response.data);
-      // }
-      
-      // For now, start with empty array (no mock data)
-      setVehicles([]);
+      setLoading(true);
+      const response = await apiService.getVehicles();
+      if (response.success) {
+        setVehicles(response.data);
+      }
     } catch (error) {
       console.error('Error loading vehicles:', error);
       setVehicles([]);
+    } finally {
+      setLoading(false);
     }
   };
 
   const loadCustomers = async () => {
     try {
-      // TODO: Replace with real API call when customers API is ready
-      // const response = await apiService.getCustomers();
-      // if (response.success) {
-      //   setCustomers(response.data);
-      // }
-      
-      // For now, start with empty array (no mock data)
-      setCustomers([]);
+      const response = await apiService.getCustomers();
+      if (response.success) {
+        setCustomers(response.data);
+      }
     } catch (error) {
       console.error('Error loading customers:', error);
       setCustomers([]);
@@ -63,36 +57,56 @@ const Vehicles = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (editingVehicle) {
-      setVehicles(vehicles.map(vehicle => 
-        vehicle.id === editingVehicle.id ? { ...formData, id: editingVehicle.id } : vehicle
-      ));
-    } else {
-      const newVehicle = {
-        ...formData,
-        id: `XE${String(vehicles.length + 1).padStart(3, '0')}`,
-        createdAt: new Date().toISOString()
-      };
-      setVehicles([...vehicles, newVehicle]);
+    try {
+      if (editingVehicle) {
+        const response = await apiService.updateVehicle(editingVehicle.id, formData);
+        if (response.success) {
+          await loadVehicles();
+          handleCloseModal();
+          alert('Cập nhật xe thành công!');
+        }
+      } else {
+        const response = await apiService.createVehicle(formData);
+        if (response.success) {
+          await loadVehicles();
+          handleCloseModal();
+          alert('Thêm xe thành công!');
+        }
+      }
+    } catch (error) {
+      console.error('Error saving vehicle:', error);
+      alert(error.message || 'Có lỗi xảy ra khi lưu xe');
     }
-    handleCloseModal();
   };
 
   const handleEdit = (vehicle) => {
     setEditingVehicle(vehicle);
     setFormData({
-      customerId: vehicle.customerId,
+      customerId: vehicle.customerId || '',
       licensePlate: vehicle.licensePlate,
-      brand: vehicle.brand,
-      model: vehicle.model,
-      year: vehicle.year,
-      color: vehicle.color,
-      vin: vehicle.vin,
-      engineNumber: vehicle.engineNumber
+      ownerName: vehicle.ownerName,
+      vehicleType: vehicle.vehicleType || '',
+      color: vehicle.color || '',
+      year: vehicle.year || new Date().getFullYear()
     });
     setIsModalOpen(true);
+  };
+
+  const handleDelete = async (vehicle) => {
+    if (confirm(`Bạn có chắc chắn muốn xóa xe "${vehicle.licensePlate}"?`)) {
+      try {
+        const response = await apiService.deleteVehicle(vehicle.id);
+        if (response.success) {
+          await loadVehicles();
+          alert('Xóa xe thành công!');
+        }
+      } catch (error) {
+        console.error('Error deleting vehicle:', error);
+        alert(error.message || 'Có lỗi xảy ra khi xóa xe');
+      }
+    }
   };
 
   const handleCloseModal = () => {
@@ -101,26 +115,35 @@ const Vehicles = () => {
     setFormData({
       customerId: '',
       licensePlate: '',
-      brand: '',
-      model: '',
-      year: new Date().getFullYear(),
+      ownerName: '',
+      vehicleType: '',
       color: '',
-      vin: '',
-      engineNumber: ''
+      year: new Date().getFullYear()
     });
   };
 
-  const getCustomerName = (customerId) => {
+  const getCustomerName = (customerId, customerName, customerPhone) => {
+    if (customerName) {
+      return customerPhone ? `${customerName} (${customerPhone})` : customerName;
+    }
     const customer = customers.find(c => c.id === customerId);
     return customer ? `${customer.name} (${customer.phone})` : 'Không xác định';
   };
 
   const filteredVehicles = vehicles.filter(vehicle => 
     vehicle.licensePlate.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    vehicle.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    vehicle.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    getCustomerName(vehicle.customerId).toLowerCase().includes(searchTerm.toLowerCase())
+    vehicle.ownerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (vehicle.vehicleType && vehicle.vehicleType.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    getCustomerName(vehicle.customerId, vehicle.customerName, vehicle.customerPhone).toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="text-lg">Đang tải danh sách xe...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
@@ -156,11 +179,11 @@ const Vehicles = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Biển số</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Chủ xe</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hãng xe</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dòng xe</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên chủ xe</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Khách hàng</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Loại xe</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Màu sắc</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Năm SX</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày thêm</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
               </tr>
             </thead>
@@ -172,17 +195,17 @@ const Vehicles = () => {
                       {vehicle.licensePlate}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
+                      {vehicle.ownerName}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <User className="h-4 w-4 text-gray-500 mr-2" />
-                        {getCustomerName(vehicle.customerId)}
+                        {getCustomerName(vehicle.customerId, vehicle.customerName, vehicle.customerPhone)}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">{vehicle.brand}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{vehicle.model}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{vehicle.year}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {format(new Date(vehicle.createdAt), 'dd/MM/yyyy', { locale: vi })}
-                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">{vehicle.vehicleType || '-'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{vehicle.color || '-'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{vehicle.year || '-'}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button
                         onClick={() => handleEdit(vehicle)}
@@ -190,6 +213,13 @@ const Vehicles = () => {
                         title="Chỉnh sửa"
                       >
                         <Edit2 size={18} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(vehicle)}
+                        className="text-red-600 hover:text-red-900 mr-4"
+                        title="Xóa xe"
+                      >
+                        <Trash2 size={18} />
                       </button>
                       <button
                         className="text-green-600 hover:text-green-900"
@@ -202,8 +232,8 @@ const Vehicles = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="7" className="px-6 py-4 text-center text-sm text-gray-500">
-                    Chưa có xe nào. Thêm khách hàng trước, sau đó thêm xe mới.
+                  <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
+                    Chưa có xe nào. Nhấn "Thêm xe mới" để bắt đầu.
                   </td>
                 </tr>
               )}
@@ -227,15 +257,14 @@ const Vehicles = () => {
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Chủ xe <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Khách hàng</label>
                   <select
                     name="customerId"
                     value={formData.customerId}
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
                   >
-                    <option value="">Chọn chủ xe</option>
+                    <option value="">Chọn khách hàng (tùy chọn)</option>
                     {customers.map(customer => (
                       <option key={customer.id} value={customer.id}>
                         {customer.name} - {customer.phone}
@@ -245,7 +274,7 @@ const Vehicles = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Biển số <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Biển số xe <span className="text-red-500">*</span></label>
                   <input
                     type="text"
                     name="licensePlate"
@@ -258,41 +287,27 @@ const Vehicles = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Hãng xe <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tên chủ xe <span className="text-red-500">*</span></label>
                   <input
                     type="text"
-                    name="brand"
-                    value={formData.brand}
+                    name="ownerName"
+                    value={formData.ownerName}
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="VD: Toyota, Honda, ..."
+                    placeholder="Tên chủ xe"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Dòng xe <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Loại xe</label>
                   <input
                     type="text"
-                    name="model"
-                    value={formData.model}
+                    name="vehicleType"
+                    value={formData.vehicleType}
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="VD: Vios, City, ..."
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Năm sản xuất</label>
-                  <input
-                    type="number"
-                    name="year"
-                    min="1900"
-                    max={new Date().getFullYear() + 1}
-                    value={formData.year}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="VD: Toyota Vios, Honda City, ..."
                   />
                 </div>
 
@@ -309,27 +324,15 @@ const Vehicles = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Số khung (VIN)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Năm sản xuất</label>
                   <input
-                    type="text"
-                    name="vin"
-                    value={formData.vin}
+                    type="number"
+                    name="year"
+                    min="1900"
+                    max={new Date().getFullYear() + 1}
+                    value={formData.year}
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Số khung (17 ký tự)"
-                    maxLength="17"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Số máy</label>
-                  <input
-                    type="text"
-                    name="engineNumber"
-                    value={formData.engineNumber}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Số máy"
                   />
                 </div>
               </div>

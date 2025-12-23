@@ -124,7 +124,7 @@ class ApiService {
     return this.delete(`/accounts/${id}`);
   }
 
-  // Customer management methods (for future use)
+  // Customer management methods
   async getCustomers(params = {}) {
     return this.get('/customers', params);
   }
@@ -139,6 +139,23 @@ class ApiService {
 
   async deleteCustomer(id) {
     return this.delete(`/customers/${id}`);
+  }
+
+  // Vehicle management methods
+  async getVehicles(params = {}) {
+    return this.get('/vehicles', params);
+  }
+
+  async createVehicle(vehicleData) {
+    return this.post('/vehicles', vehicleData);
+  }
+
+  async updateVehicle(id, vehicleData) {
+    return this.put(`/vehicles/${id}`, vehicleData);
+  }
+
+  async deleteVehicle(id) {
+    return this.delete(`/vehicles/${id}`);
   }
 }
 
