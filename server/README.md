@@ -12,20 +12,49 @@ npm install
 - Import file `QLGaraOto.sql` vào MySQL
 - Cập nhật thông tin database trong `.env`
 
-### 3. Start Server
+### 3. Start Full Application (Recommended)
 ```bash
-# Development mode (with auto-reload)
-npm run server:dev
-
-# Production mode
-npm run server
+# Chạy cả Frontend + Backend cùng lúc
+npm start
+# hoặc
+npm run dev:full
 ```
 
-### 4. Test API
-- Health check: http://localhost:3001/api/health
-- API Base URL: http://localhost:3001/api
+### 4. Start Individual Services
+```bash
+# Chỉ Frontend (port 5173)
+npm run dev
 
-## 📁 Project Structure
+# Chỉ Backend (port 3001)
+npm run server:dev
+
+# Test database connection
+npm run test:db
+```
+
+### 5. Access Application
+- **Frontend**: http://localhost:5173
+- **Backend API**: http://localhost:3001/api
+- **Health Check**: http://localhost:3001/api/health
+
+## 🎯 Development Workflow
+
+### Option 1: All-in-One (Tiện nhất)
+```bash
+npm start
+```
+- Tự động chạy cả frontend và backend
+- Có màu sắc phân biệt log
+- Auto-reload khi code thay đổi
+
+### Option 2: Separate Terminals
+```bash
+# Terminal 1
+npm run dev          # Frontend
+
+# Terminal 2  
+npm run server:dev   # Backend
+```
 
 ```
 server/

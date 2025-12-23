@@ -12,7 +12,7 @@ Tạo backend API đơn giản với Express.js để kết nối frontend React
   - Cấu hình Express.js server cơ bản
   - _Requirements: 1.1, 1.2, 1.4_
 
-- [-] 2. Database Connection & Basic Setup
+- [x] 2. Database Connection & Basic Setup
   - [x] 2.1 Cấu hình database connection pool
     - Sử dụng lại config/db.js hiện có
     - Thêm error handling và retry logic
@@ -22,13 +22,13 @@ Tạo backend API đơn giản với Express.js để kết nối frontend React
     - **Property 19: Database Connection Resilience**
     - **Validates: Requirements 8.4**
 
-  - [ ] 2.3 Tạo database helper functions
+  - [x] 2.3 Tạo database helper functions
     - Implement executeQuery, findById, insertRecord, updateRecord
     - Thêm transaction support
     - _Requirements: 8.2, 8.3_
 
-- [ ] 3. Authentication System (Ưu tiên cao)
-  - [ ] 3.1 Implement JWT authentication middleware
+- [x] 3. Authentication System (Ưu tiên cao)
+  - [x] 3.1 Implement JWT authentication middleware
     - Tạo middleware/auth.js
     - Generate và verify JWT tokens
     - Extract user role từ token
@@ -39,7 +39,7 @@ Tạo backend API đơn giản với Express.js để kết nối frontend React
     - **Property 4: User Role Extraction**
     - **Validates: Requirements 2.2, 2.4**
 
-  - [ ] 3.3 Create login endpoint
+  - [x] 3.3 Create login endpoint
     - POST /api/auth/login
     - Verify credentials với TAIKHOAN table
     - Return JWT token và user info
@@ -50,8 +50,8 @@ Tạo backend API đơn giản với Express.js để kết nối frontend React
     - Test error responses
     - _Requirements: 2.1, 2.3_
 
-- [ ] 4. Fix Account Management (Giải quyết vấn đề hiện tại)
-  - [ ] 4.1 Create accounts API endpoints
+- [x] 4. Fix Account Management (Giải quyết vấn đề hiện tại)
+  - [x] 4.1 Create accounts API endpoints
     - GET /api/accounts (list accounts)
     - POST /api/accounts (create account)
     - PUT /api/accounts/:id (update account)
@@ -63,7 +63,7 @@ Tạo backend API đơn giản với Express.js để kết nối frontend React
     - **Property 6: Customer CRUD Operations**
     - **Validates: Requirements 2.5, 3.2, 3.3, 3.4**
 
-  - [ ] 4.3 Update frontend to use real API
+  - [x] 4.3 Update frontend to use real API
     - Thay thế localStorage bằng API calls
     - Update login logic để check database
     - Handle JWT token storage
