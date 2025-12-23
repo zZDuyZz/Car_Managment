@@ -230,7 +230,8 @@ const SpareParts = () => {
                     </span>
                   </div>
                 </button>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>

@@ -184,7 +184,8 @@ const RepairServices = () => {
                     </span>
                   </div>
                 </button>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>
