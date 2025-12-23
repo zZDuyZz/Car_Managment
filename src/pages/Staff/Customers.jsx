@@ -7,13 +7,27 @@ const Customers = () => {
   useEffect(() => {
     console.log('Customers component mounted');
     
-    // Simple test data
-    setCustomers([
-      { id: 1, name: 'Nguyễn Văn A', phone: '0912345678', address: '123 Đường ABC' },
-      { id: 2, name: 'Trần Thị B', phone: '0987654321', address: '456 Đường XYZ' }
-    ]);
-    setLoading(false);
+    // Load real data from API instead of mock data
+    loadCustomers();
   }, []);
+
+  const loadCustomers = async () => {
+    try {
+      // TODO: Replace with real API call when customers API is ready
+      // const response = await apiService.getCustomers();
+      // if (response.success) {
+      //   setCustomers(response.data);
+      // }
+      
+      // For now, start with empty array (no mock data)
+      setCustomers([]);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error loading customers:', error);
+      setCustomers([]);
+      setLoading(false);
+    }
+  };
 
   if (loading) {
     return (
