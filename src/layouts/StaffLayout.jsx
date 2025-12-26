@@ -59,7 +59,7 @@ const StaffLayout = ({ onLogout }) => {
                     <NavItem
                         to="/staff/repairs"
                         label="Sửa chữa"
-                        active={isActive('/staff/repairs') || isActive('/staff/services') || isActive('/staff/parts')}
+                        active={isActive('/staff/repairs')}
                         onClick={() => setActiveTab('repairs')}
                     />
 
@@ -85,89 +85,41 @@ const StaffLayout = ({ onLogout }) => {
             {/* Main content */}
             <div className="flex-1 md:ml-64">
                 <div className="p-4">
-                    {/* Tabs Navigation */}
-                    <div className="border-b border-gray-200 mb-6">
-                        <nav className="flex space-x-1" aria-label="Tabs">
-                            {activeTab === 'customers' || activeTab === 'vehicles' ? (
-                                <>
-                                    <button
-                                        onClick={() => handleTabChange('customers')}
-                                        className={`px-4 py-2 text-sm font-medium rounded-t-lg ${
-                                            activeTab === 'customers'
-                                                ? 'bg-white text-blue-600 border-t border-l border-r border-gray-200'
-                                                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                                        }`}
-                                    >
-                                        Danh sách khách hàng
-                                    </button>
-                                    <button
-                                        onClick={() => handleTabChange('vehicles')}
-                                        className={`px-4 py-2 text-sm font-medium rounded-t-lg ${
-                                            activeTab === 'vehicles'
-                                                ? 'bg-white text-blue-600 border-t border-l border-r border-gray-200'
-                                                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                                        }`}
-                                    >
-                                        Quản lý xe
-                                    </button>
-                                </>
-                            ) : activeTab === 'repairs' || activeTab === 'services' || activeTab === 'parts' ? (
-                                <>
-                                    <button
-                                        onClick={() => handleTabChange('repairs')}
-                                        className={`px-4 py-2 text-sm font-medium rounded-t-lg ${
-                                            activeTab === 'repairs'
-                                                ? 'bg-white text-blue-600 border-t border-l border-r border-gray-200'
-                                                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                                        }`}
-                                    >
-                                        Phiếu sửa chữa
-                                    </button>
-                                    <button
-                                        onClick={() => handleTabChange('services')}
-                                        className={`px-4 py-2 text-sm font-medium rounded-t-lg ${
-                                            activeTab === 'services'
-                                                ? 'bg-white text-blue-600 border-t border-l border-r border-gray-200'
-                                                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                                        }`}
-                                    >
-                                        Dịch vụ
-                                    </button>
-                                    <button
-                                        onClick={() => handleTabChange('parts')}
-                                        className={`px-4 py-2 text-sm font-medium rounded-t-lg ${
-                                            activeTab === 'parts'
-                                                ? 'bg-white text-blue-600 border-t border-l border-r border-gray-200'
-                                                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                                        }`}
-                                    >
-                                        Kho phụ tùng
-                                    </button>
-                                </>
-                            ) : activeTab === 'invoices' ? (
+                    {/* Show tabs for customers/vehicles section */}
+                    {(activeTab === 'customers' || activeTab === 'vehicles') && (
+                        <div className="border-b border-gray-200 mb-6">
+                            <nav className="flex space-x-1" aria-label="Tabs">
                                 <button
-                                    className="px-4 py-2 text-sm font-medium rounded-t-lg bg-white text-blue-600 border-t border-l border-r border-gray-200"
+                                    onClick={() => handleTabChange('customers')}
+                                    className={`px-4 py-2 text-sm font-medium rounded-t-lg ${
+                                        activeTab === 'customers' || location.pathname === '/staff'
+                                            ? 'bg-white text-blue-600 border-t border-l border-r border-gray-200'
+                                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                                    }`}
                                 >
-                                    Hóa đơn
+                                    Khách hàng
                                 </button>
-                            ) : null}
-                        </nav>
-                    </div>
+                                <button
+                                    onClick={() => handleTabChange('vehicles')}
+                                    className={`px-4 py-2 text-sm font-medium rounded-t-lg ${
+                                        activeTab === 'vehicles'
+                                            ? 'bg-white text-blue-600 border-t border-l border-r border-gray-200'
+                                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                                    }`}
+                                >
+                                    Quản lý xe
+                                </button>
+                            </nav>
+                        </div>
+                    )}
+
+                    {/* Show header for repairs */}
+                    {activeTab === 'repairs' && (
+                        <h2 className="text-xl font-semibold text-gray-800 mb-6">Danh sách phiếu sửa chữa</h2>
+                    )}
 
                     <div className="bg-white rounded-lg shadow p-6">
                         <Outlet />
-
-                        {/* Action Buttons - Only show for repairs tab */}
-                        {activeTab === 'repairs' && (
-                            <div className="fixed bottom-6 right-6">
-                                <button
-                                    onClick={() => navigate('/staff/repairs/new')}
-                                    className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded shadow"
-                                >
-                                    + Tạo phiếu sửa
-                                </button>
-                            </div>
-                        )}
                     </div>
                 </div>
             </div>

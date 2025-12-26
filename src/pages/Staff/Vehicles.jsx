@@ -9,6 +9,101 @@ const Vehicles = () => {
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [formData, setFormData] = useState({
+    licensePlate: '',
+    brand: '',
+    customerId: '',
+    customerName: '',
+    customerPhone: ''
+  });
+  
+  const [customers, setCustomers] = useState([]);
+  
+  // Fetch customers for dropdown
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        const response = await fetch('http://localhost:3001/api/customers');
+        const data = await response.json();
+        if (data.success) {
+          setCustomers(data.data);
+        }
+      } catch (err) {
+        console.error('Error fetching customers:', err);
+      }
+    };
+    
+    fetchCustomers();
+  }, []);
+  
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  
+  const handleCustomerSelect = (e) => {
+    const customerId = e.target.value;
+    const selectedCustomer = customers.find(c => c.MaKH === customerId);
+    if (selectedCustomer) {
+      setFormData(prev => ({
+        ...prev,
+        customerId: selectedCustomer.MaKH,
+        customerName: selectedCustomer.TenKH,
+        customerPhone: selectedCustomer.DienThoai || ''
+      }));
+    }
+  };
+  
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('http://localhost:3001/api/vehicles', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          BienSo: formData.licensePlate,
+          TenHieuXe: formData.brand,
+          MaKH: formData.customerId
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        alert('Tiếp nhận xe thành công!');
+        setIsModalOpen(false);
+        fetchVehicles();
+        // Reset form
+        setFormData({
+          licensePlate: '',
+          brand: '',
+          customerId: '',
+          customerName: '',
+          customerPhone: ''
+        });
+      } else {
+        alert('Có lỗi xảy ra khi tiếp nhận xe: ' + (data.message || ''));
+      }
+    } catch (err) {
+      console.error('Error submitting vehicle:', err);
+      alert('Lỗi kết nối đến server');
+    }
+  };
+  
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setFormData({
+      licensePlate: '',
+      brand: '',
+      customerId: '',
+      customerName: '',
+      customerPhone: ''
+    });
+  };
 
   // Fetch vehicles from API
   useEffect(() => {
@@ -150,6 +245,107 @@ const Vehicles = () => {
         </div>
       </div>
 
+      {/* Vehicle Reception Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold text-gray-800">Tiếp nhận xe mới</h2>
+                <button
+                  onClick={handleCloseModal}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Biển số xe <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="licensePlate"
+                      value={formData.licensePlate}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                      placeholder="Nhập biển số xe"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Hiệu xe <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="brand"
+                      value={formData.brand}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                      placeholder="Nhập hiệu xe"
+                    />
+                  </div>
+                  
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Khách hàng <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      name="customerId"
+                      value={formData.customerId}
+                      onChange={handleCustomerSelect}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    >
+                      <option value="">-- Chọn khách hàng --</option>
+                      {customers.map(customer => (
+                        <option key={customer.MaKH} value={customer.MaKH}>
+                          {customer.TenKH} - {customer.DienThoai || 'Chưa có SĐT'}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  {formData.customerId && (
+                    <div className="md:col-span-2 bg-gray-50 p-4 rounded-md">
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">Thông tin khách hàng:</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                        <div>Tên: <span className="font-medium">{formData.customerName}</span></div>
+                        <div>SĐT: <span className="font-medium">{formData.customerPhone || 'Chưa có'}</span></div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 mt-6">
+                  <button
+                    type="button"
+                    onClick={handleCloseModal}
+                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    Lưu thông tin
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Create Repair Modal */}
       {isRepairModalOpen && selectedVehicle && (
         <RepairModal 
