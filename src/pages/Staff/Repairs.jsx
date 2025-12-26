@@ -23,19 +23,25 @@ const Repairs = () => {
       
       if (data.success) {
         // Transform API data to match frontend format
-        const transformedRepairs = data.data.map(repair => ({
-          id: repair.MaPhieuSuaChua,
-          licensePlate: repair.BienSo,
-          customerName: repair.TenKH || 'Không xác định',
-          customerPhone: repair.DienThoai || '',
-          repairDate: repair.NgaySua,
-          status: repair.VehicleStatus === 1 ? 'in-progress' : 'completed', // 1 = đang sửa, 0 = hoàn thành
-          laborCost: repair.TienCong || 0,
-          partsCost: repair.TienPhuTung || 0,
-          totalCost: repair.TongTien || 0,
-          customerId: repair.MaKH,
-          vehicleStatus: repair.VehicleStatus
-        }));
+        const transformedRepairs = data.data.map(repair => {
+          const totalCost = repair.TongTien || 0;
+          const totalPaid = repair.TotalPaid || 0;
+          const isPaid = totalPaid >= totalCost && totalCost > 0;
+          
+          return {
+            id: repair.MaPhieuSuaChua,
+            licensePlate: repair.BienSo,
+            customerName: repair.TenKH || 'Không xác định',
+            customerPhone: repair.DienThoai || '',
+            repairDate: repair.NgaySua,
+            status: isPaid ? 'paid' : 'unpaid', // paid = đã thanh toán, unpaid = chưa thanh toán
+            laborCost: repair.TienCong || 0,
+            partsCost: repair.TienPhuTung || 0,
+            totalCost: totalCost,
+            totalPaid: totalPaid,
+            customerId: repair.MaKH
+          };
+        });
         setRepairs(transformedRepairs);
       } else {
         setError('Không thể tải danh sách phiếu sửa chữa');
@@ -50,9 +56,8 @@ const Repairs = () => {
 
   const getStatusBadge = (status) => {
     const statusMap = {
-      pending: { class: 'bg-yellow-100 text-yellow-800', text: 'Chờ xử lý' },
-      'in-progress': { class: 'bg-blue-100 text-blue-800', text: 'Đang sửa' },
-      completed: { class: 'bg-green-100 text-green-800', text: 'Hoàn thành' }
+      unpaid: { class: 'bg-yellow-100 text-yellow-800', text: 'Chưa thanh toán' },
+      paid: { class: 'bg-green-100 text-green-800', text: 'Đã thanh toán' }
     };
     const statusInfo = statusMap[status] || { class: 'bg-gray-100 text-gray-800', text: 'Không xác định' };
     
@@ -237,31 +242,19 @@ Tổng tiền: ${formatCurrency(repair.totalCost)}
                           <Eye size={18} />
                         </button>
                         
-                        {repair.status === 'in-progress' && (
-                          <button
-                            onClick={() => handleComplete(repair.id)}
-                            className="px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 mr-3"
-                            title="Hoàn thành"
-                          >
-                            Hoàn thành
-                          </button>
-                        )}
+                        <button
+                          onClick={() => handleExportInvoice(repair)}
+                          className="text-green-600 hover:text-green-900 mr-3"
+                          title="In hóa đơn"
+                        >
+                          <FileText size={18} />
+                        </button>
                         
-                        {repair.status === 'completed' && (
-                          <button
-                            onClick={() => handleExportInvoice(repair)}
-                            className="text-green-600 hover:text-green-900"
-                            title="Xuất hóa đơn"
-                          >
-                            <FileText size={18} />
-                          </button>
-                        )}
-                        
-                        {repair.status === 'in-progress' && (
+                        {repair.status === 'paid' && (
                           <button
                             onClick={() => handleDelete(repair.id)}
                             className="text-red-600 hover:text-red-900"
-                            title="Xóa phiếu"
+                            title="Xóa phiếu (chỉ phiếu đã thanh toán)"
                           >
                             <Trash2 size={18} />
                           </button>
@@ -331,8 +324,8 @@ Tổng tiền: ${formatCurrency(repair.totalCost)}
                           <td className="px-4 py-2">{detail.TenVatTuPhuTung || 'Không có'}</td>
                           <td className="px-4 py-2">{detail.SoLuong || 1}</td>
                           <td className="px-4 py-2">{formatCurrency(detail.DonGiaPhuTung || 0)}</td>
-                          <td className="px-4 py-2">{formatCurrency(0)}</td>
-                          <td className="px-4 py-2 font-medium">{formatCurrency((detail.SoLuong || 1) * (detail.DonGiaPhuTung || 0))}</td>
+                          <td className="px-4 py-2">{formatCurrency(detail.TienCong || 0)}</td>
+                          <td className="px-4 py-2 font-medium">{formatCurrency(((detail.SoLuong || 1) * (detail.DonGiaPhuTung || 0)) + (detail.TienCong || 0))}</td>
                         </tr>
                       ))
                     ) : (
