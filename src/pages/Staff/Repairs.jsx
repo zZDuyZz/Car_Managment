@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Edit2, FileText, Trash2, Eye } from 'lucide-react';
+import { Search, FileText, Trash2, Eye } from 'lucide-react';
 
 const Repairs = () => {
   const [repairs, setRepairs] = useState([]);
@@ -29,11 +29,12 @@ const Repairs = () => {
           customerName: repair.TenKH || 'Không xác định',
           customerPhone: repair.DienThoai || '',
           repairDate: repair.NgaySua,
-          status: 'completed', // Default status - you can add status field to database
+          status: repair.VehicleStatus === 1 ? 'in-progress' : 'completed', // 1 = đang sửa, 0 = hoàn thành
           laborCost: repair.TienCong || 0,
           partsCost: repair.TienPhuTung || 0,
           totalCost: repair.TongTien || 0,
-          customerId: repair.MaKH
+          customerId: repair.MaKH,
+          vehicleStatus: repair.VehicleStatus
         }));
         setRepairs(transformedRepairs);
       } else {
@@ -83,9 +84,32 @@ const Repairs = () => {
     }
   };
 
-  const handleEdit = (repair) => {
-    setSelectedRepair(repair);
-    setIsEditModalOpen(true);
+  const handleExportInvoice = (repair) => {
+    // Simple invoice export - in real app, you'd generate PDF
+    const invoiceContent = `
+PHIẾU SỬA CHỮA XE
+==================
+Mã phiếu: ${repair.id}
+Biển số xe: ${repair.licensePlate}
+Khách hàng: ${repair.customerName}
+Điện thoại: ${repair.customerPhone}
+Ngày sửa: ${formatDate(repair.repairDate)}
+Tiền công: ${formatCurrency(repair.laborCost)}
+Tiền phụ tùng: ${formatCurrency(repair.partsCost)}
+Tổng tiền: ${formatCurrency(repair.totalCost)}
+==================
+    `;
+    
+    // Create and download text file
+    const blob = new Blob([invoiceContent], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `hoa-don-${repair.licensePlate}-${repair.id}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
   };
 
   const handleDelete = async (repairId) => {
@@ -107,11 +131,6 @@ const Repairs = () => {
         alert('Lỗi khi xóa phiếu sửa chữa');
       }
     }
-  };
-
-  const handleExportInvoice = (repair) => {
-    // Logic to export invoice
-    alert(`Xuất hóa đơn cho phiếu ${repair.id}`);
   };
 
   const filteredRepairs = repairs.filter(repair => 
@@ -209,34 +228,45 @@ const Repairs = () => {
                       {formatCurrency(repair.totalCost)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button
-                        onClick={() => handleView(repair)}
-                        className="text-gray-600 hover:text-gray-900 mr-3"
-                        title="Xem chi tiết"
-                      >
-                        <Eye size={18} />
-                      </button>
-                      <button
-                        onClick={() => handleEdit(repair)}
-                        className="text-blue-600 hover:text-blue-900 mr-3"
-                        title="Chỉnh sửa"
-                      >
-                        <Edit2 size={18} />
-                      </button>
-                      <button
-                        onClick={() => handleExportInvoice(repair)}
-                        className="text-green-600 hover:text-green-900 mr-3"
-                        title="Xuất hóa đơn"
-                      >
-                        <FileText size={18} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(repair.id)}
-                        className="text-red-600 hover:text-red-900"
-                        title="Xóa"
-                      >
-                        <Trash2 size={18} />
-                      </button>
+                      <div className="flex justify-end space-x-2">
+                        <button
+                          onClick={() => handleView(repair)}
+                          className="text-gray-600 hover:text-gray-900"
+                          title="Xem chi tiết"
+                        >
+                          <Eye size={18} />
+                        </button>
+                        
+                        {repair.status === 'in-progress' && (
+                          <button
+                            onClick={() => handleComplete(repair.id)}
+                            className="px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 mr-3"
+                            title="Hoàn thành"
+                          >
+                            Hoàn thành
+                          </button>
+                        )}
+                        
+                        {repair.status === 'completed' && (
+                          <button
+                            onClick={() => handleExportInvoice(repair)}
+                            className="text-green-600 hover:text-green-900"
+                            title="Xuất hóa đơn"
+                          >
+                            <FileText size={18} />
+                          </button>
+                        )}
+                        
+                        {repair.status === 'in-progress' && (
+                          <button
+                            onClick={() => handleDelete(repair.id)}
+                            className="text-red-600 hover:text-red-900"
+                            title="Xóa phiếu"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))

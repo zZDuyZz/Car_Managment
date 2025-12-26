@@ -150,6 +150,40 @@ router.put('/:id/totals', (req, res) => {
   }
 });
 
+// Complete repair (mark vehicle as finished)
+router.patch('/:id/complete', (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Get repair info
+    const repair = queries.getRepairById.get(id);
+    if (!repair) {
+      return res.status(404).json({ 
+        error: 'Repair not found' 
+      });
+    }
+
+    // Update vehicle status to completed (0)
+    const result = queries.updateVehicleStatus.run(0, repair.BienSo);
+    
+    if (result.changes === 0) {
+      return res.status(404).json({ 
+        error: 'Vehicle not found' 
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Repair completed successfully'
+    });
+  } catch (error) {
+    console.error('Complete repair error:', error);
+    res.status(500).json({ 
+      error: 'Failed to complete repair' 
+    });
+  }
+});
+
 // Delete repair
 router.delete('/:id', (req, res) => {
   try {

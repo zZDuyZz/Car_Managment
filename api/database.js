@@ -105,14 +105,18 @@ export const queries = {
   
   // Repair queries
   getAllRepairs: db.prepare(`
-    SELECT p.*, x.BienSo, k.TenKH, k.DienThoai
+    SELECT p.*, x.BienSo, k.TenKH, k.DienThoai,
+           COALESCE(SUM(pt.TienThu), 0) as TotalPaid
     FROM PHIEUSUACHUA p
     LEFT JOIN XE x ON p.BienSo = x.BienSo
     LEFT JOIN KHACHHANG k ON p.MaKH = k.MaKH
+    LEFT JOIN PHIEUTHUTIEN pt ON p.MaKH = pt.MaKH 
+      AND pt.NgayThuTien >= p.NgaySua
+    GROUP BY p.MaPhieuSuaChua
     ORDER BY p.NgaySua DESC
   `),
   getRepairById: db.prepare(`
-    SELECT p.*, x.BienSo, k.TenKH, k.DienThoai
+    SELECT p.*, x.BienSo, x.TrangThai as VehicleStatus, k.TenKH, k.DienThoai
     FROM PHIEUSUACHUA p
     LEFT JOIN XE x ON p.BienSo = x.BienSo
     LEFT JOIN KHACHHANG k ON p.MaKH = k.MaKH
