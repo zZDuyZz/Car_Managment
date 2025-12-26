@@ -30,85 +30,92 @@ router.get('/', async (req, res) => {
 
 // POST /api/repairs - Create new repair order
 router.post('/', async (req, res) => {
-  try {
-    console.log('🔥 POST REPAIRS ROUTE HIT!', req.body);
-    
-    const { vehicleId, notes, repairDetails } = req.body;
+    try {
+        console.log('🔥 POST REPAIRS ROUTE HIT!', req.body);
 
-    // Validation
-    if (!vehicleId) {
-      return res.status(400).json({
-        success: false,
-        data: null,
-        message: 'Mã xe là bắt buộc'
-      });
-    }
+        const { vehicleId, notes, accountId, repairDetails = [] } = req.body;
 
-    // Check if vehicle exists
-    const vehicle = await executeQuery(
-      'SELECT * FROM XE WHERE MaXe = ?',
-      [vehicleId]
-    );
+        // Validation
+        if (!vehicleId) {
+            return res.status(400).json({
+                success: false,
+                data: null,
+                message: 'Mã xe là bắt buộc'
+            });
+        }
 
-    if (vehicle.length === 0) {
-      return res.status(400).json({
-        success: false,
-        data: null,
-        message: 'Xe không tồn tại'
-      });
-    }
-
-    // Insert new repair order
-    const result = await executeQuery(
-      'INSERT INTO PHIEUSUA (MaXe, NgayVao, TongTien, TrangThai, GhiChu, MaTaiKhoan) VALUES (?, datetime("now"), 0, "DANG_SUA", ?, ?)',
-      [vehicleId, notes || '', 1] // Tạm thời dùng user ID = 1
-    );
-
-    const repairId = result.lastID;
-
-    // Insert repair details if provided
-    if (repairDetails && repairDetails.length > 0) {
-      for (const detail of repairDetails) {
-        await executeQuery(
-          'INSERT INTO CHITIETPHIEUSUA (MaPhieuSua, NoiDungSua, ChiPhiSua) VALUES (?, ?, ?)',
-          [repairId, detail.description, detail.cost || 0]
+        // Check if vehicle exists
+        const vehicle = await executeQuery(
+            'SELECT * FROM XE WHERE MaXe = ?',
+            [vehicleId]
         );
-      }
+
+        if (vehicle.length === 0) {
+            return res.status(400).json({
+                success: false,
+                data: null,
+                message: 'Xe không tồn tại'
+            });
+        }
+
+        // Start transaction
+        await executeQuery('BEGIN TRANSACTION');
+
+        try {
+            // Insert new repair order
+            const result = await executeQuery(
+                'INSERT INTO PHIEUSUA (MaXe, NgayVao, TongTien, TrangThai, GhiChu, MaTaiKhoan) VALUES (?, datetime("now"), 0, "DANG_SUA", ?, ?)',
+                [vehicleId, notes || '', accountId || 1]
+            );
+
+            const repairId = result.lastID;
+            let totalAmount = 0;
+
+            // Insert repair details if provided
+            if (repairDetails && repairDetails.length > 0) {
+                for (const detail of repairDetails) {
+                    const cost = parseFloat(detail.cost) || 0;
+                    await executeQuery(
+                        'INSERT INTO CHITIETPHIEUSUA (MaPhieuSua, NoiDungSua, ChiPhiSua) VALUES (?, ?, ?)',
+                        [repairId, `${detail.description} - ${detail.partName}`, cost]
+                    );
+                    totalAmount += cost;
+                }
+            }
+
+            // Update total amount
+            await executeQuery(
+                'UPDATE PHIEUSUA SET TongTien = ? WHERE MaPhieuSua = ?',
+                [totalAmount, repairId]
+            );
+
+            // Commit transaction
+            await executeQuery('COMMIT');
+
+            res.status(201).json({
+                success: true,
+                data: {
+                    id: repairId,
+                    vehicleId: vehicleId,
+                    totalAmount: totalAmount,
+                    status: 'DANG_SUA',
+                    notes: notes
+                },
+                message: 'Tạo phiếu sửa chữa thành công'
+            });
+        } catch (error) {
+            // Rollback transaction on error
+            await executeQuery('ROLLBACK');
+            throw error;
+        }
+    } catch (error) {
+        console.error('Error creating repair:', error);
+        res.status(500).json({
+            success: false,
+            data: null,
+            message: error.message || 'Lỗi khi tạo phiếu sửa chữa'
+        });
     }
-
-    // Calculate total amount
-    const totalResult = await executeQuery(
-      'SELECT SUM(ChiPhiSua) as total FROM CHITIETPHIEUSUA WHERE MaPhieuSua = ?',
-      [repairId]
-    );
-
-    const totalAmount = totalResult[0].total || 0;
-
-    // Update total amount
-    await executeQuery(
-      'UPDATE PHIEUSUA SET TongTien = ? WHERE MaPhieuSua = ?',
-      [totalAmount, repairId]
-    );
-
-    res.status(201).json({
-      success: true,
-      data: {
-        id: repairId,
-        vehicleId: vehicleId,
-        totalAmount: totalAmount,
-        status: 'DANG_SUA',
-        notes: notes
-      },
-      message: 'Tạo phiếu sửa chữa thành công'
-    });
-  } catch (error) {
-    console.error('Error creating repair:', error);
-    res.status(500).json({
-      success: false,
-      data: null,
-      message: 'Lỗi khi tạo phiếu sửa chữa'
-    });
-  }
 });
 
 export default router;

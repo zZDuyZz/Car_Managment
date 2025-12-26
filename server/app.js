@@ -9,6 +9,7 @@ import accountRoutes from './routes/accounts.js';
 import customerRoutes from './routes/customers.js';
 import vehicleRoutes from './routes/vehicles.js';
 import inventoryRoutes from './routes/inventory.js';
+import repairRoutes from './routes/repairs.js';
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler.js';
@@ -45,6 +46,7 @@ app.use('/api/accounts', accountRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/inventory', inventoryRoutes);
+app.use('/api/repairs', repairRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {

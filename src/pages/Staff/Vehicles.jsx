@@ -202,29 +202,38 @@ const Vehicles = () => {
     }
   };
 
-  const handleSubmitRepair = async (e) => {
-    e.preventDefault();
-    try {
-      const repairData = {
-        vehicleId: selectedVehicle.id,
-        notes: repairFormData.notes,
-        repairDetails: repairFormData.repairDetails.map(detail => ({
-          description: `${detail.description} - ${detail.partName}`,
-          cost: parseFloat(detail.totalCost) || 0
-        })).filter(detail => detail.description.trim() !== ' - ')
-      };
+    const handleSubmitRepair = async (e) => {
+        e.preventDefault();
+        try {
+            // Get current user from localStorage
+            const currentUser = JSON.parse(localStorage.getItem('user'));
+            const accountId = currentUser?.id || 1;
 
-      const response = await apiService.createDirectRepair(repairData);
-      if (response.success) {
-        alert('Tạo phiếu sửa chữa thành công!');
-        handleCloseRepairModal();
-      }
-    } catch (error) {
-      console.error('Error creating repair:', error);
-      alert(error.message || 'Có lỗi xảy ra khi tạo phiếu sửa chữa');
-    }
-  };
+            const repairData = {
+                vehicleId: selectedVehicle.id,
+                notes: repairFormData.notes,
+                accountId: accountId,
+                repairDetails: repairFormData.repairDetails
+                    .filter(detail => detail.description.trim() !== '' || detail.partName.trim() !== '')
+                    .map(detail => ({
+                        description: detail.description.trim() || 'Không có mô tả',
+                        partName: detail.partName.trim() || 'Không có tên phụ tùng',
+                        cost: parseFloat(detail.totalCost) || 0
+                    }))
+            };
 
+            console.log('Sending repair data:', repairData); // For debugging
+
+            const response = await apiService.createDirectRepair(repairData);
+            if (response.success) {
+                alert('Tạo phiếu sửa chữa thành công!');
+                handleCloseRepairModal();
+            }
+        } catch (error) {
+            console.error('Error creating repair:', error);
+            alert(error.message || 'Có lỗi xảy ra khi tạo phiếu sửa chữa');
+        }
+    };
   const getCustomerName = (customerId, customerName, customerPhone) => {
     if (customerName) {
       return customerPhone ? `${customerName} (${customerPhone})` : customerName;

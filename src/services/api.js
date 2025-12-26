@@ -6,7 +6,9 @@ class ApiService {
   constructor() {
     this.baseURL = API_BASE_URL;
   }
-
+    async createDirectRepair(repairData) {
+        return this.post('/repairs', repairData);
+    }
   // Get auth token from localStorage
   getToken() {
     return localStorage.getItem('token');
@@ -158,9 +160,9 @@ class ApiService {
     return this.delete(`/vehicles/${id}`);
   }
 
-  // Create repair using direct endpoint
+  // Direct repair creation (from vehicle page)
   async createDirectRepair(repairData) {
-    return this.post('/create-repair', repairData);
+    return this.post('/repairs', repairData);
   }
 
   // Repair management methods
