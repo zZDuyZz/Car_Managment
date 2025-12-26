@@ -1,7 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Edit2, FileText, Trash2, Eye } from 'lucide-react';
-import { format } from 'date-fns';
-import { vi } from 'date-fns/locale';
 
 const Repairs = () => {
   const [repairs, setRepairs] = useState([]);
@@ -9,42 +7,45 @@ const Repairs = () => {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedRepair, setSelectedRepair] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Mock data - Replace with API call
+  // Fetch repairs from API
   useEffect(() => {
-    const mockRepairs = [
-      {
-        id: 'PSC001',
-        licensePlate: '51A-12345',
-        customerName: 'Nguyễn Văn A',
-        customerPhone: '0912345678',
-        repairDate: '2024-01-15',
-        status: 'completed', // pending, in-progress, completed
-        laborCost: 200000,
-        partsCost: 150000,
-        totalCost: 350000,
-        details: [
-          { id: 1, description: 'Thay dầu động cơ', partName: 'Dầu Castrol 5W-30', quantity: 1, unitPrice: 150000, laborCost: 50000, totalPrice: 200000 },
-          { id: 2, description: 'Thay lọc dầu', partName: 'Lọc dầu Toyota', quantity: 1, unitPrice: 80000, laborCost: 70000, totalPrice: 150000 }
-        ]
-      },
-      {
-        id: 'PSC002',
-        licensePlate: '51B-67890',
-        customerName: 'Trần Thị B',
-        customerPhone: '0987654321',
-        repairDate: '2024-01-14',
-        status: 'in-progress',
-        laborCost: 300000,
-        partsCost: 500000,
-        totalCost: 800000,
-        details: [
-          { id: 1, description: 'Sửa phanh', partName: 'Má phanh Brembo', quantity: 4, unitPrice: 125000, laborCost: 300000, totalPrice: 800000 }
-        ]
-      }
-    ];
-    setRepairs(mockRepairs);
+    fetchRepairs();
   }, []);
+
+  const fetchRepairs = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('http://localhost:3001/api/repairs');
+      const data = await response.json();
+      
+      if (data.success) {
+        // Transform API data to match frontend format
+        const transformedRepairs = data.data.map(repair => ({
+          id: repair.MaPhieuSuaChua,
+          licensePlate: repair.BienSo,
+          customerName: repair.TenKH || 'Không xác định',
+          customerPhone: repair.DienThoai || '',
+          repairDate: repair.NgaySua,
+          status: 'completed', // Default status - you can add status field to database
+          laborCost: repair.TienCong || 0,
+          partsCost: repair.TienPhuTung || 0,
+          totalCost: repair.TongTien || 0,
+          customerId: repair.MaKH
+        }));
+        setRepairs(transformedRepairs);
+      } else {
+        setError('Không thể tải danh sách phiếu sửa chữa');
+      }
+    } catch (err) {
+      console.error('Fetch repairs error:', err);
+      setError('Lỗi kết nối đến server');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusBadge = (status) => {
     const statusMap = {
@@ -61,9 +62,25 @@ const Repairs = () => {
     );
   };
 
-  const handleView = (repair) => {
-    setSelectedRepair(repair);
-    setIsViewModalOpen(true);
+  const handleView = async (repair) => {
+    try {
+      // Fetch repair details from API
+      const response = await fetch(`http://localhost:3001/api/repairs/${repair.id}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setSelectedRepair({
+          ...repair,
+          details: data.data.details || []
+        });
+        setIsViewModalOpen(true);
+      } else {
+        alert('Không thể tải chi tiết phiếu sửa chữa');
+      }
+    } catch (err) {
+      console.error('Fetch repair details error:', err);
+      alert('Lỗi khi tải chi tiết phiếu sửa chữa');
+    }
   };
 
   const handleEdit = (repair) => {
@@ -71,9 +88,24 @@ const Repairs = () => {
     setIsEditModalOpen(true);
   };
 
-  const handleDelete = (repairId) => {
+  const handleDelete = async (repairId) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa phiếu sửa chữa này?')) {
-      setRepairs(repairs.filter(repair => repair.id !== repairId));
+      try {
+        const response = await fetch(`http://localhost:3001/api/repairs/${repairId}`, {
+          method: 'DELETE'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          setRepairs(repairs.filter(repair => repair.id !== repairId));
+        } else {
+          alert('Không thể xóa phiếu sửa chữa');
+        }
+      } catch (err) {
+        console.error('Delete repair error:', err);
+        alert('Lỗi khi xóa phiếu sửa chữa');
+      }
     }
   };
 
@@ -83,7 +115,7 @@ const Repairs = () => {
   };
 
   const filteredRepairs = repairs.filter(repair => 
-    repair.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    String(repair.id).toLowerCase().includes(searchTerm.toLowerCase()) ||
     repair.licensePlate.toLowerCase().includes(searchTerm.toLowerCase()) ||
     repair.customerName.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -95,6 +127,14 @@ const Repairs = () => {
     }).format(amount);
   };
 
+  const formatDate = (dateString) => {
+    try {
+      return new Date(dateString).toLocaleDateString('vi-VN');
+    } catch {
+      return dateString;
+    }
+  };
+
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
@@ -103,6 +143,12 @@ const Repairs = () => {
           Tổng: {filteredRepairs.length} phiếu
         </div>
       </div>
+
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          {error}
+        </div>
+      )}
 
       <div className="bg-white rounded-lg shadow p-4 mb-6">
         <div className="relative">
@@ -134,7 +180,13 @@ const Repairs = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredRepairs.length > 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan="7" className="px-6 py-4 text-center text-sm text-gray-500">
+                    Đang tải dữ liệu...
+                  </td>
+                </tr>
+              ) : filteredRepairs.length > 0 ? (
                 filteredRepairs.map((repair) => (
                   <tr key={repair.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -148,7 +200,7 @@ const Repairs = () => {
                       <div className="text-xs text-gray-500">{repair.customerPhone}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {format(new Date(repair.repairDate), 'dd/MM/yyyy', { locale: vi })}
+                      {formatDate(repair.repairDate)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {getStatusBadge(repair.status)}
@@ -222,7 +274,7 @@ const Repairs = () => {
                   <p><strong>Số điện thoại:</strong> {selectedRepair.customerPhone}</p>
                 </div>
                 <div>
-                  <p><strong>Ngày sửa:</strong> {format(new Date(selectedRepair.repairDate), 'dd/MM/yyyy', { locale: vi })}</p>
+                  <p><strong>Ngày sửa:</strong> {formatDate(selectedRepair.repairDate)}</p>
                   <p><strong>Trạng thái:</strong> {getStatusBadge(selectedRepair.status)}</p>
                 </div>
               </div>
@@ -241,17 +293,25 @@ const Repairs = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {selectedRepair.details.map((detail, index) => (
-                      <tr key={detail.id} className="border-b">
-                        <td className="px-4 py-2">{index + 1}</td>
-                        <td className="px-4 py-2">{detail.description}</td>
-                        <td className="px-4 py-2">{detail.partName}</td>
-                        <td className="px-4 py-2">{detail.quantity}</td>
-                        <td className="px-4 py-2">{formatCurrency(detail.unitPrice)}</td>
-                        <td className="px-4 py-2">{formatCurrency(detail.laborCost)}</td>
-                        <td className="px-4 py-2 font-medium">{formatCurrency(detail.totalPrice)}</td>
+                    {selectedRepair.details && selectedRepair.details.length > 0 ? (
+                      selectedRepair.details.map((detail, index) => (
+                        <tr key={detail.MaPhieuSuaChua + '-' + index} className="border-b">
+                          <td className="px-4 py-2">{index + 1}</td>
+                          <td className="px-4 py-2">{detail.TenTienCong || 'Dịch vụ'}</td>
+                          <td className="px-4 py-2">{detail.TenVatTuPhuTung || 'Không có'}</td>
+                          <td className="px-4 py-2">{detail.SoLuong || 1}</td>
+                          <td className="px-4 py-2">{formatCurrency(detail.DonGiaPhuTung || 0)}</td>
+                          <td className="px-4 py-2">{formatCurrency(0)}</td>
+                          <td className="px-4 py-2 font-medium">{formatCurrency((detail.SoLuong || 1) * (detail.DonGiaPhuTung || 0))}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="7" className="px-4 py-2 text-center text-gray-500">
+                          Không có chi tiết sửa chữa
+                        </td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               </div>

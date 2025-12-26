@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 // Import components
@@ -106,7 +106,7 @@ function App() {
             )
           }
         >
-          <Route index element={<Navigate to="/staff/customers" replace />} />
+          <Route index element={<Navigate to="/staff/vehicles" replace />} />
           <Route path="customers" element={<Customers />} />
           <Route path="vehicles" element={<Vehicles />} />
           <Route path="repairs" element={<Repairs />} />

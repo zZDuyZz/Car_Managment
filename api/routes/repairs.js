@@ -88,9 +88,9 @@ router.post('/:id/details', (req, res) => {
     const { serviceId, partId, quantity, unitPrice } = req.body;
 
     // Validation
-    if (!quantity || !unitPrice) {
+    if (!quantity) {
       return res.status(400).json({ 
-        error: 'Quantity and unit price are required' 
+        error: 'Quantity is required' 
       });
     }
 
@@ -100,22 +100,14 @@ router.post('/:id/details', (req, res) => {
       });
     }
 
-    const totalPrice = quantity * unitPrice;
-
     // Add repair detail
     const result = queries.addRepairDetail.run(
       id, 
       serviceId || null, 
       partId || null, 
       quantity, 
-      unitPrice, 
-      totalPrice
+      unitPrice || null
     );
-
-    // If it's a part, update stock
-    if (partId) {
-      queries.updatePartStock.run(quantity, partId);
-    }
 
     res.status(201).json({
       success: true,

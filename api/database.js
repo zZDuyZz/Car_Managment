@@ -116,7 +116,7 @@ export const queries = {
     FROM PHIEUSUACHUA p
     LEFT JOIN XE x ON p.BienSo = x.BienSo
     LEFT JOIN KHACHHANG k ON p.MaKH = k.MaKH
-    WHERE p.MaPhieu = ?
+    WHERE p.MaPhieuSuaChua = ?
   `),
   createRepair: db.prepare(`
     INSERT INTO PHIEUSUACHUA (BienSo, MaKH, TienCong, TienPhuTung, TongTien, NgaySua) 
@@ -125,53 +125,53 @@ export const queries = {
   updateRepair: db.prepare(`
     UPDATE PHIEUSUACHUA 
     SET TienCong = ?, TienPhuTung = ?, TongTien = ?
-    WHERE MaPhieu = ?
+    WHERE MaPhieuSuaChua = ?
   `),
-  deleteRepair: db.prepare('DELETE FROM PHIEUSUACHUA WHERE MaPhieu = ?'),
+  deleteRepair: db.prepare('DELETE FROM PHIEUSUACHUA WHERE MaPhieuSuaChua = ?'),
   
   // Repair detail queries
   getRepairDetails: db.prepare(`
-    SELECT ct.*, dv.TenDichVu, pt.TenPhuTung
-    FROM CHITIETSUACHUA ct
-    LEFT JOIN DICHVU dv ON ct.MaDV = dv.MaDV
-    LEFT JOIN PHUTUNG pt ON ct.MaPT = pt.MaPT
-    WHERE ct.MaPhieu = ?
+    SELECT ct.*, tc.TenTienCong, k.TenVatTuPhuTung
+    FROM CHITIETPHIEUSUACHUA ct
+    LEFT JOIN TIENCONG tc ON ct.MaTC = tc.MaTC
+    LEFT JOIN KHO k ON ct.MaPhuTung = k.MaPhuTung
+    WHERE ct.MaPhieuSuaChua = ?
   `),
   addRepairDetail: db.prepare(`
-    INSERT INTO CHITIETSUACHUA (MaPhieu, MaDV, MaPT, SoLuong, DonGia, ThanhTien)
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT INTO CHITIETPHIEUSUACHUA (MaPhieuSuaChua, MaTC, MaPhuTung, SoLuong, DonGiaPhuTung)
+    VALUES (?, ?, ?, ?, ?)
   `),
-  deleteRepairDetail: db.prepare('DELETE FROM CHITIETSUACHUA WHERE MaCT = ?'),
+  deleteRepairDetail: db.prepare('DELETE FROM CHITIETPHIEUSUACHUA WHERE MaPhieuSuaChua = ? AND MaTC = ? AND MaPhuTung = ?'),
   
   // Brand queries
   getAllBrands: db.prepare('SELECT * FROM HIEUXE ORDER BY TenHieuXe'),
   
-  // Service queries
-  getAllServices: db.prepare('SELECT * FROM DICHVU ORDER BY TenDichVu'),
-  getServiceById: db.prepare('SELECT * FROM DICHVU WHERE MaDV = ?'),
+  // Service queries (using TIENCONG table)
+  getAllServices: db.prepare('SELECT * FROM TIENCONG ORDER BY TenTienCong'),
+  getServiceById: db.prepare('SELECT * FROM TIENCONG WHERE MaTC = ?'),
   createService: db.prepare(`
-    INSERT INTO DICHVU (TenDichVu, DonGia) 
+    INSERT INTO TIENCONG (TenTienCong, ChiPhi) 
     VALUES (?, ?)
   `),
   updateService: db.prepare(`
-    UPDATE DICHVU SET TenDichVu = ?, DonGia = ? WHERE MaDV = ?
+    UPDATE TIENCONG SET TenTienCong = ?, ChiPhi = ? WHERE MaTC = ?
   `),
-  deleteService: db.prepare('DELETE FROM DICHVU WHERE MaDV = ?'),
+  deleteService: db.prepare('DELETE FROM TIENCONG WHERE MaTC = ?'),
   
-  // Parts queries
-  getAllParts: db.prepare('SELECT * FROM PHUTUNG ORDER BY TenPhuTung'),
-  getPartById: db.prepare('SELECT * FROM PHUTUNG WHERE MaPT = ?'),
+  // Parts queries (using KHO table)
+  getAllParts: db.prepare('SELECT * FROM KHO ORDER BY TenVatTuPhuTung'),
+  getPartById: db.prepare('SELECT * FROM KHO WHERE MaPhuTung = ?'),
   createPart: db.prepare(`
-    INSERT INTO PHUTUNG (TenPhuTung, DonGia, SoLuongTon) 
+    INSERT INTO KHO (TenVatTuPhuTung, DonGia, SoLuong) 
     VALUES (?, ?, ?)
   `),
   updatePart: db.prepare(`
-    UPDATE PHUTUNG SET TenPhuTung = ?, DonGia = ?, SoLuongTon = ? WHERE MaPT = ?
+    UPDATE KHO SET TenVatTuPhuTung = ?, DonGia = ?, SoLuong = ? WHERE MaPhuTung = ?
   `),
   updatePartStock: db.prepare(`
-    UPDATE PHUTUNG SET SoLuongTon = SoLuongTon - ? WHERE MaPT = ?
+    UPDATE KHO SET SoLuong = SoLuong - ? WHERE MaPhuTung = ?
   `),
-  deletePart: db.prepare('DELETE FROM PHUTUNG WHERE MaPT = ?'),
+  deletePart: db.prepare('DELETE FROM KHO WHERE MaPhuTung = ?'),
 };
 
 export default db;
