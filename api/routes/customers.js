@@ -6,7 +6,16 @@ const router = express.Router();
 // Get all customers
 router.get('/', (req, res) => {
   try {
-    const customers = queries.getAllCustomers.all();
+    const { search } = req.query;
+    let customers;
+    
+    if (search) {
+      const searchTerm = `%${search}%`;
+      customers = queries.searchCustomers.all(searchTerm, searchTerm, searchTerm);
+    } else {
+      customers = queries.getAllCustomers.all();
+    }
+    
     res.json({
       success: true,
       data: customers

@@ -11,8 +11,6 @@ import AdminLayout from './layouts/AdminLayout';
 import Customers from './pages/Staff/Customers';
 import Vehicles from './pages/Staff/Vehicles';
 import Repairs from './pages/Staff/Repairs';
-import RepairServices from './pages/Staff/RepairServices';
-import SpareParts from './pages/Staff/SpareParts';
 import Invoices from './pages/Staff/Invoices';
 import Search from './pages/Staff/Search';
 
@@ -112,8 +110,6 @@ function App() {
           <Route path="customers" element={<Customers />} />
           <Route path="vehicles" element={<Vehicles />} />
           <Route path="repairs" element={<Repairs />} />
-          <Route path="services" element={<RepairServices />} />
-          <Route path="parts" element={<SpareParts />} />
           <Route path="invoices" element={<Invoices />} />
           <Route path="search" element={<Search />} />
           

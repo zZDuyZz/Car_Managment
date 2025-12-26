@@ -1,125 +1,62 @@
 import React, { useState, useEffect } from 'react';
-import { PlusCircle, Search, Edit2, X, Car, User } from 'lucide-react';
-import { format } from 'date-fns';
-import { vi } from 'date-fns/locale';
+import { PlusCircle, Search, Edit2, Wrench } from 'lucide-react';
 
 const Vehicles = () => {
   const [vehicles, setVehicles] = useState([]);
-  const [customers, setCustomers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingVehicle, setEditingVehicle] = useState(null);
-  const [formData, setFormData] = useState({
-    customerId: '',
-    licensePlate: '',
-    brand: '',
-    model: '',
-    year: new Date().getFullYear(),
-    color: '',
-    vin: '',
-    engineNumber: ''
-  });
+  const [isRepairModalOpen, setIsRepairModalOpen] = useState(false);
+  const [selectedVehicle, setSelectedVehicle] = useState(null);
 
-  // Mock data
+  // Mock data - Replace with API call
   useEffect(() => {
-    const mockCustomers = [
-      { id: 'KH001', name: 'Nguyễn Văn A', phone: '0912345678' },
-      { id: 'KH002', name: 'Trần Thị B', phone: '0987654321' },
-    ];
-    
     const mockVehicles = [
       { 
-        id: 'XE001', 
-        customerId: 'KH001',
+        id: 1, 
         licensePlate: '51A-12345', 
-        brand: 'Toyota', 
-        model: 'Vios', 
-        year: 2020,
-        color: 'Trắng',
-        vin: 'JTDKB20U977676543',
-        engineNumber: '3SZVE53B767254321',
-        createdAt: '2023-01-15'
+        brand: 'Toyota Camry', 
+        owner: 'Nguyễn Văn A', 
+        phone: '0912345678',
+        status: 1, // 1: Chờ sửa, 2: Đang sửa, 3: Hoàn thành
+        receivedDate: '2024-01-15'
       },
       { 
-        id: 'XE002', 
-        customerId: 'KH002',
-        licensePlate: '51B-54321', 
-        brand: 'Honda', 
-        model: 'City', 
-        year: 2021,
-        color: 'Đen',
-        vin: 'MHKM5EA3J0K123456',
-        engineNumber: 'L15B123456789',
-        createdAt: '2023-02-20'
-      }
+        id: 2, 
+        licensePlate: '51B-67890', 
+        brand: 'Honda Civic', 
+        owner: 'Trần Thị B', 
+        phone: '0987654321',
+        status: 2,
+        receivedDate: '2024-01-14'
+      },
     ];
-    
-    setCustomers(mockCustomers);
     setVehicles(mockVehicles);
   }, []);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+  const getStatusBadge = (status) => {
+    const statusMap = {
+      1: { class: 'bg-yellow-100 text-yellow-800', text: 'Chờ sửa' },
+      2: { class: 'bg-blue-100 text-blue-800', text: 'Đang sửa' },
+      3: { class: 'bg-green-100 text-green-800', text: 'Hoàn thành' }
+    };
+    const statusInfo = statusMap[status] || { class: 'bg-gray-100 text-gray-800', text: 'Không xác định' };
+    
+    return (
+      <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusInfo.class}`}>
+        {statusInfo.text}
+      </span>
+    );
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (editingVehicle) {
-      setVehicles(vehicles.map(vehicle => 
-        vehicle.id === editingVehicle.id ? { ...formData, id: editingVehicle.id } : vehicle
-      ));
-    } else {
-      const newVehicle = {
-        ...formData,
-        id: `XE${String(vehicles.length + 1).padStart(3, '0')}`,
-        createdAt: new Date().toISOString()
-      };
-      setVehicles([...vehicles, newVehicle]);
-    }
-    handleCloseModal();
-  };
-
-  const handleEdit = (vehicle) => {
-    setEditingVehicle(vehicle);
-    setFormData({
-      customerId: vehicle.customerId,
-      licensePlate: vehicle.licensePlate,
-      brand: vehicle.brand,
-      model: vehicle.model,
-      year: vehicle.year,
-      color: vehicle.color,
-      vin: vehicle.vin,
-      engineNumber: vehicle.engineNumber
-    });
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setEditingVehicle(null);
-    setFormData({
-      customerId: '',
-      licensePlate: '',
-      brand: '',
-      model: '',
-      year: new Date().getFullYear(),
-      color: '',
-      vin: '',
-      engineNumber: ''
-    });
-  };
-
-  const getCustomerName = (customerId) => {
-    const customer = customers.find(c => c.id === customerId);
-    return customer ? `${customer.name} (${customer.phone})` : 'Không xác định';
+  const handleCreateRepair = (vehicle) => {
+    setSelectedVehicle(vehicle);
+    setIsRepairModalOpen(true);
   };
 
   const filteredVehicles = vehicles.filter(vehicle => 
     vehicle.licensePlate.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    vehicle.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    vehicle.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    getCustomerName(vehicle.customerId).toLowerCase().includes(searchTerm.toLowerCase())
+    vehicle.owner.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    vehicle.brand.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -131,7 +68,7 @@ const Vehicles = () => {
           className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
         >
           <PlusCircle size={20} />
-          <span>Thêm xe mới</span>
+          <span>Tiếp nhận xe</span>
         </button>
       </div>
 
@@ -142,7 +79,7 @@ const Vehicles = () => {
           </div>
           <input
             type="text"
-            placeholder="Tìm kiếm xe..."
+            placeholder="Tìm kiếm xe theo biển số, chủ xe, hoặc hiệu xe..."
             className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -156,11 +93,11 @@ const Vehicles = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Biển số</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hiệu xe</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Chủ xe</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hãng xe</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dòng xe</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Năm SX</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày thêm</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Số điện thoại</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày tiếp nhận</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
               </tr>
             </thead>
@@ -168,34 +105,37 @@ const Vehicles = () => {
               {filteredVehicles.length > 0 ? (
                 filteredVehicles.map((vehicle) => (
                   <tr key={vehicle.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {vehicle.licensePlate}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <User className="h-4 w-4 text-gray-500 mr-2" />
-                        {getCustomerName(vehicle.customerId)}
-                      </div>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {vehicle.brand}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">{vehicle.brand}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{vehicle.model}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{vehicle.year}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {format(new Date(vehicle.createdAt), 'dd/MM/yyyy', { locale: vi })}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {vehicle.owner}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {vehicle.phone}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(vehicle.receivedDate).toLocaleDateString('vi-VN')}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {getStatusBadge(vehicle.status)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button
-                        onClick={() => handleEdit(vehicle)}
+                        onClick={() => handleCreateRepair(vehicle)}
                         className="text-blue-600 hover:text-blue-900 mr-4"
-                        title="Chỉnh sửa"
+                        title="Tạo phiếu sửa chữa"
                       >
-                        <Edit2 size={18} />
+                        <Wrench size={18} />
                       </button>
                       <button
-                        className="text-green-600 hover:text-green-900"
-                        title="Xem lịch sử sửa chữa"
+                        className="text-gray-600 hover:text-gray-900"
+                        title="Chỉnh sửa thông tin xe"
                       >
-                        <Car size={18} />
+                        <Edit2 size={18} />
                       </button>
                     </td>
                   </tr>
@@ -212,144 +152,126 @@ const Vehicles = () => {
         </div>
       </div>
 
-      {/* Add/Edit Vehicle Modal */}
-      {isModalOpen && (
+      {/* Create Repair Modal */}
+      {isRepairModalOpen && selectedVehicle && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center border-b p-4 sticky top-0 bg-white z-10">
-              <h2 className="text-lg font-semibold">
-                {editingVehicle ? 'Cập nhật thông tin xe' : 'Thêm xe mới'}
+          <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <h2 className="text-xl font-bold mb-4">
+                Tạo phiếu sửa chữa - {selectedVehicle.licensePlate}
               </h2>
-              <button onClick={handleCloseModal} className="text-gray-500 hover:text-gray-700">
-                <X size={20} />
-              </button>
-            </div>
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Chủ xe <span className="text-red-500">*</span></label>
-                  <select
-                    name="customerId"
-                    value={formData.customerId}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  >
-                    <option value="">Chọn chủ xe</option>
-                    {customers.map(customer => (
-                      <option key={customer.id} value={customer.id}>
-                        {customer.name} - {customer.phone}
-                      </option>
-                    ))}
-                  </select>
+              <div className="text-sm text-gray-600 mb-4">
+                Chủ xe: {selectedVehicle.owner} | Hiệu xe: {selectedVehicle.brand}
+              </div>
+              
+              {/* Repair Form will be implemented here */}
+              <div className="border rounded-lg p-4 mb-4">
+                <h3 className="font-medium mb-2">Thông tin phiếu sửa chữa</h3>
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Biển số xe</label>
+                    <input
+                      type="text"
+                      value={selectedVehicle.licensePlate}
+                      disabled
+                      className="w-full px-3 py-2 border rounded-lg bg-gray-50"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Ngày sửa chữa</label>
+                    <input
+                      type="date"
+                      defaultValue={new Date().toISOString().split('T')[0]}
+                      className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+                
+                {/* Service/Parts Table */}
+                <div className="border rounded-lg overflow-hidden mb-4">
+                  <table className="min-w-full">
+                    <thead className="bg-gray-800 text-white">
+                      <tr>
+                        <th className="px-4 py-2 text-left text-xs font-medium uppercase">STT</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium uppercase">Nội dung</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium uppercase">Vật tư/Phụ tùng</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium uppercase">Số lượng</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium uppercase">Đơn giá</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium uppercase">Tiền công</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium uppercase">Thành tiền</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td className="px-4 py-2 border-b">1</td>
+                        <td className="px-4 py-2 border-b">
+                          <input type="text" className="w-full px-2 py-1 border rounded" placeholder="Mô tả công việc..." />
+                        </td>
+                        <td className="px-4 py-2 border-b">
+                          <input type="text" className="w-full px-2 py-1 border rounded" placeholder="Tên phụ tùng..." />
+                        </td>
+                        <td className="px-4 py-2 border-b">
+                          <input type="number" className="w-full px-2 py-1 border rounded" placeholder="1" />
+                        </td>
+                        <td className="px-4 py-2 border-b">
+                          <input type="number" className="w-full px-2 py-1 border rounded" placeholder="0" />
+                        </td>
+                        <td className="px-4 py-2 border-b">
+                          <input type="number" className="w-full px-2 py-1 border rounded" placeholder="0" />
+                        </td>
+                        <td className="px-4 py-2 border-b">
+                          <input type="number" className="w-full px-2 py-1 border rounded" placeholder="0" disabled />
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="px-4 py-2 border-b">2</td>
+                        <td className="px-4 py-2 border-b">
+                          <input type="text" className="w-full px-2 py-1 border rounded" placeholder="Mô tả công việc..." />
+                        </td>
+                        <td className="px-4 py-2 border-b">
+                          <input type="text" className="w-full px-2 py-1 border rounded" placeholder="Tên phụ tùng..." />
+                        </td>
+                        <td className="px-4 py-2 border-b">
+                          <input type="number" className="w-full px-2 py-1 border rounded" placeholder="1" />
+                        </td>
+                        <td className="px-4 py-2 border-b">
+                          <input type="number" className="w-full px-2 py-1 border rounded" placeholder="0" />
+                        </td>
+                        <td className="px-4 py-2 border-b">
+                          <input type="number" className="w-full px-2 py-1 border rounded" placeholder="0" />
+                        </td>
+                        <td className="px-4 py-2 border-b">
+                          <input type="number" className="w-full px-2 py-1 border rounded" placeholder="0" disabled />
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Biển số <span className="text-red-500">*</span></label>
-                  <input
-                    type="text"
-                    name="licensePlate"
-                    value={formData.licensePlate}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="VD: 51A-12345"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Hãng xe <span className="text-red-500">*</span></label>
-                  <input
-                    type="text"
-                    name="brand"
-                    value={formData.brand}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="VD: Toyota, Honda, ..."
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Dòng xe <span className="text-red-500">*</span></label>
-                  <input
-                    type="text"
-                    name="model"
-                    value={formData.model}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="VD: Vios, City, ..."
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Năm sản xuất</label>
-                  <input
-                    type="number"
-                    name="year"
-                    min="1900"
-                    max={new Date().getFullYear() + 1}
-                    value={formData.year}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Màu sắc</label>
-                  <input
-                    type="text"
-                    name="color"
-                    value={formData.color}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="VD: Đen, Trắng, Xám, ..."
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Số khung (VIN)</label>
-                  <input
-                    type="text"
-                    name="vin"
-                    value={formData.vin}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Số khung (17 ký tự)"
-                    maxLength="17"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Số máy</label>
-                  <input
-                    type="text"
-                    name="engineNumber"
-                    value={formData.engineNumber}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Số máy"
-                  />
+                <div className="flex justify-between items-center">
+                  <button className="text-blue-600 hover:text-blue-800 text-sm">
+                    + Thêm dòng
+                  </button>
+                  <div className="text-lg font-bold">
+                    Tổng tiền: <span className="text-blue-600">0 VND</span>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-3 pt-4">
+              <div className="flex justify-end space-x-3">
                 <button
-                  type="button"
-                  onClick={handleCloseModal}
+                  onClick={() => setIsRepairModalOpen(false)}
                   className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
                 >
                   Hủy
                 </button>
                 <button
-                  type="submit"
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                 >
-                  {editingVehicle ? 'Cập nhật' : 'Thêm mới'}
+                  Lưu phiếu sửa chữa
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}

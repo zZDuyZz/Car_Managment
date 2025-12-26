@@ -9,6 +9,8 @@ import accountRoutes from './routes/accounts.js';
 import customerRoutes from './routes/customers.js';
 import vehicleRoutes from './routes/vehicles.js';
 import repairRoutes from './routes/repairs.js';
+import serviceRoutes from './routes/services.js';
+import partRoutes from './routes/parts.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -27,6 +29,8 @@ app.use('/api/accounts', accountRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/repairs', repairRoutes);
+app.use('/api/services', serviceRoutes);
+app.use('/api/parts', partRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

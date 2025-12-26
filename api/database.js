@@ -48,6 +48,7 @@ export const queries = {
   // Customer queries
   getAllCustomers: db.prepare('SELECT * FROM KHACHHANG ORDER BY MaKH DESC'),
   getCustomerById: db.prepare('SELECT * FROM KHACHHANG WHERE MaKH = ?'),
+  getCustomerByPhone: db.prepare('SELECT * FROM KHACHHANG WHERE DienThoai = ?'),
   createCustomer: db.prepare(`
     INSERT INTO KHACHHANG (TenKH, DienThoai, DiaChi, TienNo) 
     VALUES (?, ?, ?, 0)
@@ -58,6 +59,11 @@ export const queries = {
     WHERE MaKH = ?
   `),
   deleteCustomer: db.prepare('DELETE FROM KHACHHANG WHERE MaKH = ?'),
+  searchCustomers: db.prepare(`
+    SELECT * FROM KHACHHANG 
+    WHERE TenKH LIKE ? OR DienThoai LIKE ? OR MaKH LIKE ?
+    ORDER BY MaKH DESC
+  `),
   
   // Vehicle queries
   getAllVehicles: db.prepare(`
@@ -67,27 +73,105 @@ export const queries = {
     LEFT JOIN HIEUXE h ON x.MaHX = h.MaHX
     ORDER BY x.NgayTiepNhan DESC
   `),
-  getVehicleByPlate: db.prepare('SELECT * FROM XE WHERE BienSo = ?'),
+  getVehicleByPlate: db.prepare(`
+    SELECT x.*, k.TenKH, k.DienThoai, h.TenHieuXe
+    FROM XE x
+    LEFT JOIN KHACHHANG k ON x.MaKH = k.MaKH
+    LEFT JOIN HIEUXE h ON x.MaHX = h.MaHX
+    WHERE x.BienSo = ?
+  `),
+  getVehiclesByCustomer: db.prepare(`
+    SELECT x.*, h.TenHieuXe
+    FROM XE x
+    LEFT JOIN HIEUXE h ON x.MaHX = h.MaHX
+    WHERE x.MaKH = ?
+    ORDER BY x.NgayTiepNhan DESC
+  `),
   createVehicle: db.prepare(`
     INSERT INTO XE (BienSo, MaHX, MaKH, NgayTiepNhan, TrangThai) 
     VALUES (?, ?, ?, datetime('now', 'localtime'), 1)
   `),
+  updateVehicleStatus: db.prepare(`
+    UPDATE XE SET TrangThai = ? WHERE BienSo = ?
+  `),
+  searchVehicles: db.prepare(`
+    SELECT x.*, k.TenKH, k.DienThoai, h.TenHieuXe
+    FROM XE x
+    LEFT JOIN KHACHHANG k ON x.MaKH = k.MaKH
+    LEFT JOIN HIEUXE h ON x.MaHX = h.MaHX
+    WHERE x.BienSo LIKE ? OR k.TenKH LIKE ?
+    ORDER BY x.NgayTiepNhan DESC
+  `),
   
   // Repair queries
   getAllRepairs: db.prepare(`
-    SELECT p.*, x.BienSo, k.TenKH
+    SELECT p.*, x.BienSo, k.TenKH, k.DienThoai
     FROM PHIEUSUACHUA p
     LEFT JOIN XE x ON p.BienSo = x.BienSo
     LEFT JOIN KHACHHANG k ON p.MaKH = k.MaKH
     ORDER BY p.NgaySua DESC
   `),
+  getRepairById: db.prepare(`
+    SELECT p.*, x.BienSo, k.TenKH, k.DienThoai
+    FROM PHIEUSUACHUA p
+    LEFT JOIN XE x ON p.BienSo = x.BienSo
+    LEFT JOIN KHACHHANG k ON p.MaKH = k.MaKH
+    WHERE p.MaPhieu = ?
+  `),
   createRepair: db.prepare(`
     INSERT INTO PHIEUSUACHUA (BienSo, MaKH, TienCong, TienPhuTung, TongTien, NgaySua) 
     VALUES (?, ?, 0, 0, 0, datetime('now', 'localtime'))
   `),
+  updateRepair: db.prepare(`
+    UPDATE PHIEUSUACHUA 
+    SET TienCong = ?, TienPhuTung = ?, TongTien = ?
+    WHERE MaPhieu = ?
+  `),
+  deleteRepair: db.prepare('DELETE FROM PHIEUSUACHUA WHERE MaPhieu = ?'),
+  
+  // Repair detail queries
+  getRepairDetails: db.prepare(`
+    SELECT ct.*, dv.TenDichVu, pt.TenPhuTung
+    FROM CHITIETSUACHUA ct
+    LEFT JOIN DICHVU dv ON ct.MaDV = dv.MaDV
+    LEFT JOIN PHUTUNG pt ON ct.MaPT = pt.MaPT
+    WHERE ct.MaPhieu = ?
+  `),
+  addRepairDetail: db.prepare(`
+    INSERT INTO CHITIETSUACHUA (MaPhieu, MaDV, MaPT, SoLuong, DonGia, ThanhTien)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `),
+  deleteRepairDetail: db.prepare('DELETE FROM CHITIETSUACHUA WHERE MaCT = ?'),
   
   // Brand queries
   getAllBrands: db.prepare('SELECT * FROM HIEUXE ORDER BY TenHieuXe'),
+  
+  // Service queries
+  getAllServices: db.prepare('SELECT * FROM DICHVU ORDER BY TenDichVu'),
+  getServiceById: db.prepare('SELECT * FROM DICHVU WHERE MaDV = ?'),
+  createService: db.prepare(`
+    INSERT INTO DICHVU (TenDichVu, DonGia) 
+    VALUES (?, ?)
+  `),
+  updateService: db.prepare(`
+    UPDATE DICHVU SET TenDichVu = ?, DonGia = ? WHERE MaDV = ?
+  `),
+  deleteService: db.prepare('DELETE FROM DICHVU WHERE MaDV = ?'),
+  
+  // Parts queries
+  getAllParts: db.prepare('SELECT * FROM PHUTUNG ORDER BY TenPhuTung'),
+  getPartById: db.prepare('SELECT * FROM PHUTUNG WHERE MaPT = ?'),
+  createPart: db.prepare(`
+    INSERT INTO PHUTUNG (TenPhuTung, DonGia, SoLuongTon) 
+    VALUES (?, ?, ?)
+  `),
+  updatePart: db.prepare(`
+    UPDATE PHUTUNG SET TenPhuTung = ?, DonGia = ?, SoLuongTon = ? WHERE MaPT = ?
+  `),
+  updatePartStock: db.prepare(`
+    UPDATE PHUTUNG SET SoLuongTon = SoLuongTon - ? WHERE MaPT = ?
+  `),
+  deletePart: db.prepare('DELETE FROM PHUTUNG WHERE MaPT = ?'),
 };
 
 export default db;
