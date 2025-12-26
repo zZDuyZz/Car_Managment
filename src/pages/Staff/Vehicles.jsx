@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PlusCircle, Search, Edit2, X, Car, User, Trash2 } from 'lucide-react';
 import apiService from '../../services/api.js';
 
@@ -202,33 +203,40 @@ const Vehicles = () => {
     }
   };
 
-    const handleSubmitRepair = async (e) => {
-        e.preventDefault();
-        try {
-            // Get current user from localStorage
-            const currentUser = JSON.parse(localStorage.getItem('user'));
-            const accountId = currentUser?.id || 1;
+    const navigate = useNavigate();
 
-            const repairData = {
-                vehicleId: selectedVehicle.id,
-                notes: repairFormData.notes,
-                accountId: accountId,
-                repairDetails: repairFormData.repairDetails
-                    .filter(detail => detail.description.trim() !== '' || detail.partName.trim() !== '')
-                    .map(detail => ({
-                        description: detail.description.trim() || 'Không có mô tả',
-                        partName: detail.partName.trim() || 'Không có tên phụ tùng',
-                        cost: parseFloat(detail.totalCost) || 0
-                    }))
-            };
+  const handleSubmitRepair = async (e) => {
+    e.preventDefault();
+    try {
+      // Get current user from localStorage
+      const currentUser = JSON.parse(localStorage.getItem('user'));
+      const accountId = currentUser?.id || 1;
 
-            console.log('Sending repair data:', repairData); // For debugging
+      const repairData = {
+        vehicleId: selectedVehicle.id,
+        notes: repairFormData.notes,
+        accountId: accountId,
+        repairDetails: repairFormData.repairDetails
+          .filter(detail => detail.description.trim() !== '' || detail.partName.trim() !== '')
+          .map(detail => ({
+            description: detail.description.trim() || 'Không có mô tả',
+            partName: detail.partName.trim() || 'Không có tên phụ tùng',
+            quantity: parseFloat(detail.quantity) || 0,
+            unitPrice: parseFloat(detail.unitPrice) || 0,
+            laborCost: parseFloat(detail.laborCost) || 0,
+            totalCost: parseFloat(detail.totalCost) || 0
+          }))
+      };
 
-            const response = await apiService.createDirectRepair(repairData);
-            if (response.success) {
-                alert('Tạo phiếu sửa chữa thành công!');
-                handleCloseRepairModal();
-            }
+      console.log('Sending repair data:', repairData);
+
+      const response = await apiService.createDirectRepair(repairData);
+      if (response.success) {
+        alert('Tạo phiếu sửa chữa thành công!');
+        handleCloseRepairModal();
+        // Navigate to repairs page
+        navigate('/staff/repairs');
+      }
         } catch (error) {
             console.error('Error creating repair:', error);
             alert(error.message || 'Có lỗi xảy ra khi tạo phiếu sửa chữa');

@@ -55,6 +55,13 @@ const StaffLayout = ({ onLogout }) => {
                         active={isActive('/staff/vehicles')}
                         onClick={() => setActiveTab('vehicles')}
                     />
+
+                    <NavItem
+                        to="/staff/repairs"
+                        label="Sửa chữa và thanh toán"
+                        active={isActive('/staff/repairs')}
+                        onClick={() => setActiveTab('repairs')}
+                    />
                 </nav>
 
                 {/* Logout */}

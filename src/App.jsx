@@ -8,6 +8,7 @@ import AdminLayout from './layouts/AdminLayout';
 // Staff components
 import Customers from './pages/Staff/Customers';
 import Vehicles from './pages/Staff/Vehicles';
+import Repairs from './pages/Staff/Repairs';
 
 // Admin components
 import Accounts from './pages/Admin/Accounts';
@@ -92,6 +93,7 @@ function App() {
                 <Route index element={<Navigate to="customers" replace />} />
                 <Route path="customers" element={<Customers />} />
                 <Route path="vehicles" element={<Vehicles />} />
+                <Route path="repairs" element={<Repairs />} />
             </Route>
             
             {/* Default redirect */}
