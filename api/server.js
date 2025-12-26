@@ -11,6 +11,7 @@ import vehicleRoutes from './routes/vehicles.js';
 import repairRoutes from './routes/repairs.js';
 import serviceRoutes from './routes/services.js';
 import partRoutes from './routes/parts.js';
+import paymentRoutes from './routes/payments.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -31,6 +32,7 @@ app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/repairs', repairRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/parts', partRoutes);
+app.use('/api/payments', paymentRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -172,6 +172,25 @@ export const queries = {
     UPDATE KHO SET SoLuong = SoLuong - ? WHERE MaPhuTung = ?
   `),
   deletePart: db.prepare('DELETE FROM KHO WHERE MaPhuTung = ?'),
+  
+  // Payment queries
+  getAllPayments: db.prepare(`
+    SELECT p.*, k.TenKH, k.DienThoai
+    FROM PHIEUTHUTIEN p
+    LEFT JOIN KHACHHANG k ON p.MaKH = k.MaKH
+    ORDER BY p.NgayThuTien DESC
+  `),
+  getPaymentById: db.prepare(`
+    SELECT p.*, k.TenKH, k.DienThoai
+    FROM PHIEUTHUTIEN p
+    LEFT JOIN KHACHHANG k ON p.MaKH = k.MaKH
+    WHERE p.MaPhieuThuTien = ?
+  `),
+  createPayment: db.prepare(`
+    INSERT INTO PHIEUTHUTIEN (MaKH, TienThu, GhiChu, NgayThuTien) 
+    VALUES (?, ?, ?, datetime('now', 'localtime'))
+  `),
+  deletePayment: db.prepare('DELETE FROM PHIEUTHUTIEN WHERE MaPhieuThuTien = ?'),
 };
 
 export default db;
