@@ -7,21 +7,45 @@ const Customers = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
     address: ''
   });
 
-  // Mock data - Replace with API call in real implementation
+  // Fetch customers from API
   useEffect(() => {
-    // This would be an API call in a real app
-    const mockCustomers = [
-      { id: 'KH001', name: 'Nguyễn Văn A', phone: '0912345678', address: '123 Đường Lê Lợi, Q.1, TP.HCM' },
-      { id: 'KH002', name: 'Trần Thị B', phone: '0987654321', address: '456 Đường Nguyễn Huệ, Q.1, TP.HCM' },
-    ];
-    setCustomers(mockCustomers);
+    fetchCustomers();
   }, []);
+
+  const fetchCustomers = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('http://localhost:3001/api/customers');
+      const data = await response.json();
+      
+      if (data.success) {
+        // Transform data to match frontend format
+        const transformedCustomers = data.data.map(customer => ({
+          id: customer.MaKH,
+          name: customer.TenKH,
+          phone: customer.DienThoai || '',
+          address: customer.DiaChi || '',
+          debt: customer.TienNo || 0
+        }));
+        setCustomers(transformedCustomers);
+      } else {
+        setError('Không thể tải danh sách khách hàng');
+      }
+    } catch (err) {
+      console.error('Fetch customers error:', err);
+      setError('Lỗi kết nối đến server');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -31,22 +55,57 @@ const Customers = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (editingCustomer) {
-      // Update existing customer
-      setCustomers(customers.map(cust => 
-        cust.id === editingCustomer.id ? { ...formData, id: editingCustomer.id } : cust
-      ));
-    } else {
-      // Add new customer
-      const newCustomer = {
-        ...formData,
-        id: `KH${String(customers.length + 1).padStart(3, '0')}`
-      };
-      setCustomers([...customers, newCustomer]);
+    try {
+      if (editingCustomer) {
+        // Update existing customer
+        const response = await fetch(`http://localhost:3001/api/customers/${editingCustomer.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: formData.name,
+            phone: formData.phone,
+            address: formData.address
+          })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          alert('Cập nhật khách hàng thành công!');
+          fetchCustomers(); // Refresh data
+        } else {
+          alert('Không thể cập nhật khách hàng');
+        }
+      } else {
+        // Add new customer
+        const response = await fetch('http://localhost:3001/api/customers', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: formData.name,
+            phone: formData.phone,
+            address: formData.address
+          })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          alert('Thêm khách hàng thành công!');
+          fetchCustomers(); // Refresh data
+        } else {
+          alert('Không thể thêm khách hàng');
+        }
+      }
+      handleCloseModal();
+    } catch (err) {
+      console.error('Submit error:', err);
+      alert('Lỗi khi lưu thông tin khách hàng');
     }
-    handleCloseModal();
   };
 
   const handleEdit = (customer) => {
@@ -65,11 +124,29 @@ const Customers = () => {
     setFormData({ name: '', phone: '', address: '' });
   };
 
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND'
+    }).format(amount);
+  };
+
   const filteredCustomers = customers.filter(customer => 
     customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     customer.phone.includes(searchTerm) ||
-    customer.id.toLowerCase().includes(searchTerm.toLowerCase())
+    customer.id.toString().includes(searchTerm)
   );
+
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Đang tải dữ liệu...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
@@ -83,6 +160,12 @@ const Customers = () => {
           <span>Thêm khách hàng</span>
         </button>
       </div>
+
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          {error}
+        </div>
+      )}
 
       <div className="bg-white rounded-lg shadow p-4 mb-6">
         <div className="relative">
@@ -108,6 +191,7 @@ const Customers = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên khách hàng</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Số điện thoại</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Địa chỉ</th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Tiền nợ</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
               </tr>
             </thead>
@@ -116,7 +200,7 @@ const Customers = () => {
                 filteredCustomers.map((customer) => (
                   <tr key={customer.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {customer.id}
+                      KH{String(customer.id).padStart(3, '0')}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {customer.name}
@@ -126,6 +210,11 @@ const Customers = () => {
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500">
                       {customer.address}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                      <span className={`font-semibold ${customer.debt > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                        {formatCurrency(customer.debt)}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button
@@ -147,7 +236,7 @@ const Customers = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">
+                  <td colSpan="6" className="px-6 py-4 text-center text-sm text-gray-500">
                     Không tìm thấy khách hàng nào
                   </td>
                 </tr>

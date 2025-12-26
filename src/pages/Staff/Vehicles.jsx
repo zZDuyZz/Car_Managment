@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { PlusCircle, Search, Edit2, Wrench } from 'lucide-react';
+import { PlusCircle, Search, Wrench } from 'lucide-react';
 
 const Vehicles = () => {
   const [vehicles, setVehicles] = useState([]);
@@ -29,7 +29,6 @@ const Vehicles = () => {
           brand: vehicle.TenHieuXe || 'Không xác định',
           owner: vehicle.TenKH || 'Không xác định',
           phone: vehicle.DienThoai || '',
-          status: vehicle.TrangThai || 1,
           receivedDate: vehicle.NgayTiepNhan,
           customerId: vehicle.MaKH
         }));
@@ -43,21 +42,6 @@ const Vehicles = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const getStatusBadge = (status) => {
-    const statusMap = {
-      1: { class: 'bg-yellow-100 text-yellow-800', text: 'Chờ sửa' },
-      2: { class: 'bg-blue-100 text-blue-800', text: 'Đang sửa' },
-      3: { class: 'bg-green-100 text-green-800', text: 'Hoàn thành' }
-    };
-    const statusInfo = statusMap[status] || { class: 'bg-gray-100 text-gray-800', text: 'Không xác định' };
-    
-    return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusInfo.class}`}>
-        {statusInfo.text}
-      </span>
-    );
   };
 
   const handleCreateRepair = (vehicle) => {
@@ -115,7 +99,6 @@ const Vehicles = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Chủ xe</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Số điện thoại</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày tiếp nhận</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
               </tr>
             </thead>
@@ -144,29 +127,20 @@ const Vehicles = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {new Date(vehicle.receivedDate).toLocaleDateString('vi-VN')}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {getStatusBadge(vehicle.status)}
-                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button
                         onClick={() => handleCreateRepair(vehicle)}
-                        className="text-blue-600 hover:text-blue-900 mr-4"
+                        className="text-blue-600 hover:text-blue-900"
                         title="Tạo phiếu sửa chữa"
                       >
                         <Wrench size={18} />
-                      </button>
-                      <button
-                        className="text-gray-600 hover:text-gray-900"
-                        title="Chỉnh sửa thông tin xe"
-                      >
-                        <Edit2 size={18} />
                       </button>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="7" className="px-6 py-4 text-center text-sm text-gray-500">
+                  <td colSpan="6" className="px-6 py-4 text-center text-sm text-gray-500">
                     Không tìm thấy xe nào
                   </td>
                 </tr>

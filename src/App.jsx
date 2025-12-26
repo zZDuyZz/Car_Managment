@@ -12,7 +12,6 @@ import Customers from './pages/Staff/Customers';
 import Vehicles from './pages/Staff/Vehicles';
 import Repairs from './pages/Staff/Repairs';
 import Invoices from './pages/Staff/Invoices';
-import Search from './pages/Staff/Search';
 
 // Admin pages
 import Accounts from './pages/Admin/Accounts';
@@ -111,7 +110,6 @@ function App() {
           <Route path="vehicles" element={<Vehicles />} />
           <Route path="repairs" element={<Repairs />} />
           <Route path="invoices" element={<Invoices />} />
-          <Route path="search" element={<Search />} />
           
           {/* New item routes */}
           <Route path="customers/new" element={<div className="p-6">Thêm khách hàng mới</div>} />
