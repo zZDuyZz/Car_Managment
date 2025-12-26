@@ -76,7 +76,11 @@ const Invoices = () => {
   };
 
   const handleSubmitPayment = async () => {
-    if (!selectedRepair || !paymentAmount || parseFloat(paymentAmount) <= 0) {
+    // Clean and validate payment amount
+    const cleanAmount = paymentAmount.toString().replace(/[^\d.]/g, '');
+    const numericAmount = parseFloat(cleanAmount);
+    
+    if (!selectedRepair || !paymentAmount || isNaN(numericAmount) || numericAmount <= 0) {
       alert('Vui lòng nhập số tiền hợp lệ');
       return;
     }
@@ -89,7 +93,7 @@ const Invoices = () => {
         },
         body: JSON.stringify({
           customerId: selectedRepair.customerId,
-          amount: parseFloat(paymentAmount),
+          amount: numericAmount,
           note: paymentNote
         })
       });
@@ -386,7 +390,7 @@ const Invoices = () => {
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Số tiền thu</label>
                 <input
-                  type="number"
+                  type="text"
                   value={paymentAmount}
                   onChange={(e) => setPaymentAmount(e.target.value)}
                   className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"

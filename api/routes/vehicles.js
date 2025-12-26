@@ -57,39 +57,50 @@ router.get('/plate/:plate', (req, res) => {
 // Create new vehicle
 router.post('/', (req, res) => {
   try {
-    const { licensePlate, brandId, customerId } = req.body;
+    const { BienSo, TenHieuXe, MaKH } = req.body;
 
     // Validation
-    if (!licensePlate || !brandId || !customerId) {
+    if (!BienSo || !TenHieuXe || !MaKH) {
       return res.status(400).json({ 
-        error: 'License plate, brand ID, and customer ID are required' 
+        error: 'Biển số, hiệu xe và mã khách hàng là bắt buộc' 
       });
     }
 
     // Check if license plate already exists
-    const existingVehicle = queries.getVehicleByPlate.get(licensePlate);
+    const existingVehicle = queries.getVehicleByPlate.get(BienSo);
     if (existingVehicle) {
       return res.status(409).json({ 
-        error: 'License plate already exists' 
+        error: 'Biển số xe đã tồn tại' 
+      });
+    }
+
+    // Find brand ID by brand name
+    const brands = queries.getAllBrands.all();
+    const brand = brands.find(b => b.TenHieuXe === TenHieuXe);
+    
+    if (!brand) {
+      return res.status(400).json({ 
+        error: 'Hiệu xe không hợp lệ' 
       });
     }
 
     // Create vehicle
-    const result = queries.createVehicle.run(licensePlate, brandId, customerId);
+    const result = queries.createVehicle.run(BienSo, brand.MaHX, MaKH);
     
     res.status(201).json({
       success: true,
-      message: 'Vehicle created successfully',
+      message: 'Tiếp nhận xe thành công',
       data: {
-        licensePlate,
-        brandId,
-        customerId
+        id: BienSo,
+        BienSo,
+        TenHieuXe,
+        MaKH
       }
     });
   } catch (error) {
     console.error('Create vehicle error:', error);
     res.status(500).json({ 
-      error: 'Failed to create vehicle' 
+      error: 'Không thể tiếp nhận xe' 
     });
   }
 });

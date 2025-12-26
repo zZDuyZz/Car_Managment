@@ -14,7 +14,10 @@ const Vehicles = () => {
     brand: '',
     customerId: '',
     customerName: '',
-    customerPhone: ''
+    customerPhone: '',
+    customerAddress: '',
+    receivedDate: new Date().toISOString().split('T')[0],
+    notes: ''
   });
   
   const [customers, setCustomers] = useState([]);
@@ -46,33 +49,47 @@ const Vehicles = () => {
   
   const handleCustomerSelect = (e) => {
     const customerId = e.target.value;
-    const selectedCustomer = customers.find(c => c.MaKH === customerId);
+    const selectedCustomer = customers.find(c => c.MaKH === parseInt(customerId));
     if (selectedCustomer) {
       setFormData(prev => ({
         ...prev,
         customerId: selectedCustomer.MaKH,
         customerName: selectedCustomer.TenKH,
-        customerPhone: selectedCustomer.DienThoai || ''
+        customerPhone: selectedCustomer.DienThoai || '',
+        customerAddress: selectedCustomer.DiaChi || ''
       }));
     }
   };
   
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validation
+    if (!formData.licensePlate || !formData.brand || !formData.customerId) {
+      alert('Vui lòng điền đầy đủ thông tin bắt buộc');
+      return;
+    }
+    
     try {
+      const requestData = {
+        BienSo: formData.licensePlate,
+        TenHieuXe: formData.brand,
+        MaKH: parseInt(formData.customerId) // Convert to number
+      };
+      
+      console.log('Sending data:', requestData); // Debug log
+      
       const response = await fetch('http://localhost:3001/api/vehicles', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          BienSo: formData.licensePlate,
-          TenHieuXe: formData.brand,
-          MaKH: formData.customerId
-        })
+        body: JSON.stringify(requestData)
       });
 
       const data = await response.json();
+      console.log('Response:', data); // Debug log
+      
       if (data.success) {
         alert('Tiếp nhận xe thành công!');
         setIsModalOpen(false);
@@ -83,10 +100,13 @@ const Vehicles = () => {
           brand: '',
           customerId: '',
           customerName: '',
-          customerPhone: ''
+          customerPhone: '',
+          customerAddress: '',
+          receivedDate: new Date().toISOString().split('T')[0],
+          notes: ''
         });
       } else {
-        alert('Có lỗi xảy ra khi tiếp nhận xe: ' + (data.message || ''));
+        alert('Có lỗi xảy ra khi tiếp nhận xe: ' + (data.error || data.message || ''));
       }
     } catch (err) {
       console.error('Error submitting vehicle:', err);
@@ -101,7 +121,10 @@ const Vehicles = () => {
       brand: '',
       customerId: '',
       customerName: '',
-      customerPhone: ''
+      customerPhone: '',
+      customerAddress: '',
+      receivedDate: new Date().toISOString().split('T')[0],
+      notes: ''
     });
   };
 
@@ -262,82 +285,141 @@ const Vehicles = () => {
                 </button>
               </div>
               
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Biển số xe <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="licensePlate"
-                      value={formData.licensePlate}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                      placeholder="Nhập biển số xe"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Hiệu xe <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="brand"
-                      value={formData.brand}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                      placeholder="Nhập hiệu xe"
-                    />
-                  </div>
-                  
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Khách hàng <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      name="customerId"
-                      value={formData.customerId}
-                      onChange={handleCustomerSelect}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    >
-                      <option value="">-- Chọn khách hàng --</option>
-                      {customers.map(customer => (
-                        <option key={customer.MaKH} value={customer.MaKH}>
-                          {customer.TenKH} - {customer.DienThoai || 'Chưa có SĐT'}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  
-                  {formData.customerId && (
-                    <div className="md:col-span-2 bg-gray-50 p-4 rounded-md">
-                      <h4 className="text-sm font-medium text-gray-700 mb-2">Thông tin khách hàng:</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                        <div>Tên: <span className="font-medium">{formData.customerName}</span></div>
-                        <div>SĐT: <span className="font-medium">{formData.customerPhone || 'Chưa có'}</span></div>
-                      </div>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Thông tin xe */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="text-lg font-medium text-gray-800 mb-4">Thông tin xe</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Biển số xe <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="licensePlate"
+                        value={formData.licensePlate}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required
+                        placeholder="VD: 51A-12345"
+                      />
                     </div>
-                  )}
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Hiệu xe <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        name="brand"
+                        value={formData.brand}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required
+                      >
+                        <option value="">-- Chọn hiệu xe --</option>
+                        <option value="Toyota">Toyota</option>
+                        <option value="Honda">Honda</option>
+                        <option value="Suzuki">Suzuki</option>
+                        <option value="Ford">Ford</option>
+                        <option value="Kia">Kia</option>
+                        <option value="Hyundai">Hyundai</option>
+                        <option value="Mazda">Mazda</option>
+                        <option value="Mitsubishi">Mitsubishi</option>
+                        <option value="Isuzu">Isuzu</option>
+                        <option value="Nissan">Nissan</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Ngày tiếp nhận <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="date"
+                        name="receivedDate"
+                        value={formData.receivedDate}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Thông tin khách hàng */}
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <h3 className="text-lg font-medium text-gray-800 mb-4">Thông tin khách hàng</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Chọn khách hàng <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        name="customerId"
+                        value={formData.customerId}
+                        onChange={handleCustomerSelect}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required
+                      >
+                        <option value="">-- Chọn khách hàng --</option>
+                        {customers.map(customer => (
+                          <option key={customer.MaKH} value={customer.MaKH}>
+                            {customer.TenKH} - {customer.DienThoai || 'Chưa có SĐT'}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    
+                    {formData.customerId && (
+                      <div className="bg-white p-4 rounded-md border border-blue-200">
+                        <h4 className="text-sm font-medium text-gray-700 mb-3">Chi tiết khách hàng:</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <span className="text-gray-600">Tên khách hàng:</span>
+                            <div className="font-medium text-gray-900">{formData.customerName}</div>
+                          </div>
+                          <div>
+                            <span className="text-gray-600">Số điện thoại:</span>
+                            <div className="font-medium text-gray-900">{formData.customerPhone || 'Chưa có'}</div>
+                          </div>
+                          <div className="md:col-span-2">
+                            <span className="text-gray-600">Địa chỉ:</span>
+                            <div className="font-medium text-gray-900">{formData.customerAddress || 'Chưa có'}</div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Ghi chú */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Ghi chú
+                  </label>
+                  <textarea
+                    name="notes"
+                    value={formData.notes}
+                    onChange={handleInputChange}
+                    rows="3"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Ghi chú về tình trạng xe, yêu cầu khách hàng..."
+                  />
                 </div>
                 
-                <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 mt-6">
+                <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
                   <button
                     type="button"
                     onClick={handleCloseModal}
-                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition"
                   >
                     Hủy
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition"
                   >
-                    Lưu thông tin
+                    Tiếp nhận xe
                   </button>
                 </div>
               </form>
@@ -393,7 +475,17 @@ const RepairModal = ({ vehicle, onClose, onSave }) => {
       ...prev,
       details: prev.details.map(detail => {
         if (detail.id === id) {
-          const updated = { ...detail, [field]: value };
+          let processedValue = value;
+          
+          // Convert text to number for numeric fields
+          if (field === 'quantity' || field === 'unitPrice' || field === 'laborCost') {
+            // Remove any non-numeric characters except decimal point
+            const cleanValue = value.toString().replace(/[^\d.]/g, '');
+            processedValue = parseFloat(cleanValue) || 0;
+          }
+          
+          const updated = { ...detail, [field]: processedValue };
+          
           // Auto-calculate total price
           if (field === 'quantity' || field === 'unitPrice' || field === 'laborCost') {
             updated.totalPrice = (updated.quantity * updated.unitPrice) + updated.laborCost;
@@ -423,6 +515,8 @@ const RepairModal = ({ vehicle, onClose, onSave }) => {
       setLoading(true);
       setError(null);
 
+      console.log('Creating repair for vehicle:', vehicle.licensePlate, 'customer:', vehicle.customerId);
+
       // Create repair record
       const repairResponse = await fetch('http://localhost:3001/api/repairs', {
         method: 'POST',
@@ -436,18 +530,22 @@ const RepairModal = ({ vehicle, onClose, onSave }) => {
       });
 
       const repairResult = await repairResponse.json();
+      console.log('Repair creation result:', repairResult);
       
       if (!repairResult.success) {
         throw new Error(repairResult.error || 'Không thể tạo phiếu sửa chữa');
       }
 
       const repairId = repairResult.data.id;
+      console.log('Created repair with ID:', repairId);
 
-      // Add repair details (simplified - in real app you'd need to handle services/parts properly)
+      // Add repair details - only add rows that have meaningful data
+      let detailsAdded = 0;
       for (const detail of repairData.details) {
-        if (detail.description.trim()) {
-          // For now, we'll add as a service (MaTC = 1) - in a real app, you'd have dropdowns to select
-          await fetch(`http://localhost:3001/api/repairs/${repairId}/details`, {
+        if (detail.description.trim() || detail.partName.trim() || detail.quantity > 0 || detail.unitPrice > 0 || detail.laborCost > 0) {
+          console.log('Adding detail:', detail);
+          
+          const detailResponse = await fetch(`http://localhost:3001/api/repairs/${repairId}/details`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -458,15 +556,26 @@ const RepairModal = ({ vehicle, onClose, onSave }) => {
               unitPrice: detail.unitPrice
             })
           });
+          
+          const detailResult = await detailResponse.json();
+          console.log('Detail add result:', detailResult);
+          
+          if (detailResult.success) {
+            detailsAdded++;
+          }
         }
       }
+
+      console.log(`Added ${detailsAdded} details`);
 
       // Update repair totals
       const totalCost = calculateTotal();
       const laborCost = repairData.details.reduce((sum, detail) => sum + detail.laborCost, 0);
       const partsCost = totalCost - laborCost;
 
-      await fetch(`http://localhost:3001/api/repairs/${repairId}/totals`, {
+      console.log('Updating totals:', { laborCost, partsCost, totalCost });
+
+      const totalsResponse = await fetch(`http://localhost:3001/api/repairs/${repairId}/totals`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -478,6 +587,10 @@ const RepairModal = ({ vehicle, onClose, onSave }) => {
         })
       });
 
+      const totalsResult = await totalsResponse.json();
+      console.log('Totals update result:', totalsResult);
+
+      alert('Tạo phiếu sửa chữa thành công!');
       onSave();
     } catch (err) {
       console.error('Save repair error:', err);
@@ -566,34 +679,34 @@ const RepairModal = ({ vehicle, onClose, onSave }) => {
                       </td>
                       <td className="px-4 py-2 border-b">
                         <input 
-                          type="number" 
+                          type="text" 
                           className="w-full px-2 py-1 border rounded" 
                           placeholder="1" 
                           value={detail.quantity}
-                          onChange={(e) => updateDetail(detail.id, 'quantity', parseInt(e.target.value) || 0)}
+                          onChange={(e) => updateDetail(detail.id, 'quantity', e.target.value)}
                         />
                       </td>
                       <td className="px-4 py-2 border-b">
                         <input 
-                          type="number" 
+                          type="text" 
                           className="w-full px-2 py-1 border rounded" 
                           placeholder="0" 
                           value={detail.unitPrice}
-                          onChange={(e) => updateDetail(detail.id, 'unitPrice', parseInt(e.target.value) || 0)}
+                          onChange={(e) => updateDetail(detail.id, 'unitPrice', e.target.value)}
                         />
                       </td>
                       <td className="px-4 py-2 border-b">
                         <input 
-                          type="number" 
+                          type="text" 
                           className="w-full px-2 py-1 border rounded" 
                           placeholder="0" 
                           value={detail.laborCost}
-                          onChange={(e) => updateDetail(detail.id, 'laborCost', parseInt(e.target.value) || 0)}
+                          onChange={(e) => updateDetail(detail.id, 'laborCost', e.target.value)}
                         />
                       </td>
                       <td className="px-4 py-2 border-b">
                         <input 
-                          type="number" 
+                          type="text" 
                           className="w-full px-2 py-1 border rounded bg-gray-50" 
                           value={detail.totalPrice}
                           disabled 
