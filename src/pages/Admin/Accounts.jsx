@@ -2,11 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
+const API_BASE_URL = 'http://localhost:3001/api';
+
 const Accounts = () => {
   const [accounts, setAccounts] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -16,9 +19,29 @@ const Accounts = () => {
   });
   const [passwordError, setPasswordError] = useState('');
 
+  // Fetch accounts from API
+  const fetchAccounts = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_BASE_URL}/accounts`);
+      const result = await response.json();
+      
+      if (result.success) {
+        setAccounts(result.data);
+      } else {
+        console.error('Failed to fetch accounts:', result.error);
+        alert('Không thể tải danh sách tài khoản');
+      }
+    } catch (error) {
+      console.error('Error fetching accounts:', error);
+      alert('Lỗi kết nối đến server');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const savedAccounts = JSON.parse(localStorage.getItem('accounts')) || [];
-    setAccounts(savedAccounts);
+    fetchAccounts();
   }, []);
 
   const handleInputChange = (e) => {
@@ -34,7 +57,7 @@ const Accounts = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!formData.username || !formData.password || !formData.fullName) {
@@ -47,70 +70,100 @@ const Accounts = () => {
       return;
     }
 
-    // Check for duplicate username
-    const usernameExists = accounts.some(
-      acc => acc.username === formData.username && acc.id !== editingId
-    );
+    try {
+      setLoading(true);
+      
+      if (editingId) {
+        // Update existing account
+        const response = await fetch(`${API_BASE_URL}/accounts/${editingId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            username: formData.username,
+            password: formData.password,
+            fullName: formData.fullName,
+            role: formData.role,
+          }),
+        });
 
-    if (usernameExists) {
-      alert('Tên đăng nhập đã tồn tại');
-      return;
+        const result = await response.json();
+        
+        if (result.success) {
+          alert('Cập nhật tài khoản thành công!');
+          await fetchAccounts(); // Refresh list
+          handleCloseModal();
+        } else {
+          alert(result.error || 'Không thể cập nhật tài khoản');
+        }
+      } else {
+        // Create new account
+        const response = await fetch(`${API_BASE_URL}/accounts`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            username: formData.username,
+            password: formData.password,
+            fullName: formData.fullName,
+            role: formData.role,
+          }),
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+          alert('Tạo tài khoản thành công!');
+          await fetchAccounts(); // Refresh list
+          handleCloseModal();
+        } else {
+          alert(result.error || 'Không thể tạo tài khoản');
+        }
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      alert('Lỗi kết nối đến server');
+    } finally {
+      setLoading(false);
     }
-
-    let updatedAccounts;
-
-    if (editingId) {
-      // Update existing account
-      updatedAccounts = accounts.map(acc =>
-        acc.id === editingId
-          ? {
-              ...acc,
-              username: formData.username,
-              password: formData.password,
-              fullName: formData.fullName,
-              role: formData.role,
-              status: formData.status,
-              updatedAt: new Date().toISOString(),
-            }
-          : acc
-      );
-    } else {
-      // Create new account
-      const newAccount = {
-        id: `ACC-${Date.now()}`,
-        username: formData.username,
-        password: formData.password,
-        fullName: formData.fullName,
-        role: formData.role,
-        status: 'active',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      updatedAccounts = [...accounts, newAccount];
-    }
-
-    setAccounts(updatedAccounts);
-    localStorage.setItem('accounts', JSON.stringify(updatedAccounts));
-    handleCloseModal();
   };
 
   const handleEdit = (account) => {
     setEditingId(account.id);
     setFormData({
       username: account.username,
-      password: account.password,
+      password: '', // Don't pre-fill password for security
       fullName: account.fullName,
       role: account.role,
-      status: account.status,
+      status: 'active', // API doesn't handle status yet
     });
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa tài khoản này?')) {
-      const updatedAccounts = accounts.filter(acc => acc.id !== id);
-      setAccounts(updatedAccounts);
-      localStorage.setItem('accounts', JSON.stringify(updatedAccounts));
+      try {
+        setLoading(true);
+        const response = await fetch(`${API_BASE_URL}/accounts/${id}`, {
+          method: 'DELETE',
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+          alert('Xóa tài khoản thành công!');
+          await fetchAccounts(); // Refresh list
+        } else {
+          alert(result.error || 'Không thể xóa tài khoản');
+        }
+      } catch (error) {
+        console.error('Error deleting account:', error);
+        alert('Lỗi kết nối đến server');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -175,7 +228,13 @@ const Accounts = () => {
       </div>
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
+        {loading ? (
+          <div className="p-8 text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-2 text-gray-600">Đang tải...</p>
+          </div>
+        ) : (
+          <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên đăng nhập</th>
@@ -202,10 +261,12 @@ const Accounts = () => {
                     {getRoleBadge(account.role)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {getStatusBadge(account.status)}
+                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      Hoạt động
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {format(new Date(account.createdAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
+                    {account.createdAt ? format(new Date(account.createdAt), 'dd/MM/yyyy HH:mm', { locale: vi }) : 'N/A'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button
@@ -226,6 +287,7 @@ const Accounts = () => {
             )}
           </tbody>
         </table>
+        )}
       </div>
 
       {/* Create/Edit Modal */}

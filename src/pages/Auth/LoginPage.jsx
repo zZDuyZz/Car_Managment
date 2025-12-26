@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 
+const API_BASE_URL = 'http://localhost:3001/api';
+
 const LoginPage = ({ onLoginSuccess }) => {
     const [isLoggingIn, setIsLoggingIn] = useState(false);
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
         if (!username || !password) {
             alert("Vui lòng điền đầy đủ thông tin đăng nhập!");
@@ -14,22 +16,37 @@ const LoginPage = ({ onLoginSuccess }) => {
         
         setIsLoggingIn(true);
         
-        // Mock login logic - Updated to match database
-        const mockAdminUsername = "admin";
-        const mockAdminPassword = "admin123";
-        const mockStaffUsername = "staff";
-        const mockStaffPassword = "staff123";
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username,
+                    password,
+                }),
+            });
 
-        setTimeout(() => {
-            setIsLoggingIn(false);
-            if (username === mockAdminUsername && password === mockAdminPassword) {
-                onLoginSuccess('admin');
-            } else if (username === mockStaffUsername && password === mockStaffPassword) {
-                onLoginSuccess('staff');
+            const result = await response.json();
+
+            if (result.success) {
+                // Store JWT token if provided
+                if (result.token) {
+                    localStorage.setItem('authToken', result.token);
+                }
+                
+                // Call parent callback with user role
+                onLoginSuccess(result.user.role);
             } else {
-                alert("Tên đăng nhập hoặc mật khẩu không chính xác!");
+                alert(result.error || "Tên đăng nhập hoặc mật khẩu không chính xác!");
             }
-        }, 1000);
+        } catch (error) {
+            console.error('Login error:', error);
+            alert("Lỗi kết nối đến server!");
+        } finally {
+            setIsLoggingIn(false);
+        }
     };
 
     return (
