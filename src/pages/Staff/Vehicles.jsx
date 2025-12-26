@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
 import { PlusCircle, Search, Edit2, X, Car, User, Trash2 } from 'lucide-react';
-import { format } from 'date-fns';
-import { vi } from 'date-fns/locale';
 import apiService from '../../services/api.js';
 
 const Vehicles = () => {
@@ -10,7 +8,9 @@ const Vehicles = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isRepairModalOpen, setIsRepairModalOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState(null);
+  const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [formData, setFormData] = useState({
     customerId: '',
     licensePlate: '',
@@ -18,6 +18,12 @@ const Vehicles = () => {
     vehicleType: '',
     color: '',
     year: new Date().getFullYear()
+  });
+  const [repairFormData, setRepairFormData] = useState({
+    notes: '',
+    repairDetails: [
+      { stt: 1, description: '', partName: '', quantity: '', unitPrice: '', laborCost: '', totalCost: '' }
+    ]
   });
 
   useEffect(() => {
@@ -132,6 +138,93 @@ const Vehicles = () => {
     });
   };
 
+  const handleOpenRepairModal = (vehicle) => {
+    setSelectedVehicle(vehicle);
+    setIsRepairModalOpen(true);
+  };
+
+  const handleCloseRepairModal = () => {
+    setIsRepairModalOpen(false);
+    setSelectedVehicle(null);
+    setRepairFormData({
+      notes: '',
+      repairDetails: [
+        { stt: 1, description: '', partName: '', quantity: '', unitPrice: '', laborCost: '', totalCost: '' }
+      ]
+    });
+  };
+
+  const handleRepairInputChange = (index, field, value) => {
+    const updatedDetails = [...repairFormData.repairDetails];
+    updatedDetails[index][field] = value;
+    
+    // Auto calculate total cost
+    if (field === 'quantity' || field === 'unitPrice' || field === 'laborCost') {
+      const quantity = parseFloat(updatedDetails[index].quantity) || 0;
+      const unitPrice = parseFloat(updatedDetails[index].unitPrice) || 0;
+      const laborCost = parseFloat(updatedDetails[index].laborCost) || 0;
+      updatedDetails[index].totalCost = (quantity * unitPrice + laborCost).toFixed(0);
+    }
+    
+    setRepairFormData({
+      ...repairFormData,
+      repairDetails: updatedDetails
+    });
+  };
+
+  const addRepairRow = () => {
+    const newRow = {
+      stt: repairFormData.repairDetails.length + 1,
+      description: '',
+      partName: '',
+      quantity: '',
+      unitPrice: '',
+      laborCost: '',
+      totalCost: ''
+    };
+    setRepairFormData({
+      ...repairFormData,
+      repairDetails: [...repairFormData.repairDetails, newRow]
+    });
+  };
+
+  const removeRepairRow = (index) => {
+    if (repairFormData.repairDetails.length > 1) {
+      const updatedDetails = repairFormData.repairDetails.filter((_, i) => i !== index);
+      // Update STT numbers
+      updatedDetails.forEach((detail, i) => {
+        detail.stt = i + 1;
+      });
+      setRepairFormData({
+        ...repairFormData,
+        repairDetails: updatedDetails
+      });
+    }
+  };
+
+  const handleSubmitRepair = async (e) => {
+    e.preventDefault();
+    try {
+      const repairData = {
+        vehicleId: selectedVehicle.id,
+        notes: repairFormData.notes,
+        repairDetails: repairFormData.repairDetails.map(detail => ({
+          description: `${detail.description} - ${detail.partName}`,
+          cost: parseFloat(detail.totalCost) || 0
+        })).filter(detail => detail.description.trim() !== ' - ')
+      };
+
+      const response = await apiService.createRepair(repairData);
+      if (response.success) {
+        alert('Tạo phiếu sửa chữa thành công!');
+        handleCloseRepairModal();
+      }
+    } catch (error) {
+      console.error('Error creating repair:', error);
+      alert(error.message || 'Có lỗi xảy ra khi tạo phiếu sửa chữa');
+    }
+  };
+
   const getCustomerName = (customerId, customerName, customerPhone) => {
     if (customerName) {
       return customerPhone ? `${customerName} (${customerPhone})` : customerName;
@@ -225,8 +318,9 @@ const Vehicles = () => {
                         <Trash2 size={18} />
                       </button>
                       <button
+                        onClick={() => handleOpenRepairModal(vehicle)}
                         className="text-green-600 hover:text-green-900"
-                        title="Xem lịch sử sửa chữa"
+                        title="Tạo phiếu sửa chữa"
                       >
                         <Car size={18} />
                       </button>
@@ -353,6 +447,171 @@ const Vehicles = () => {
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                 >
                   {editingVehicle ? 'Cập nhật' : 'Thêm mới'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Repair Order Modal */}
+      {isRepairModalOpen && selectedVehicle && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg w-full max-w-6xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center border-b p-4 sticky top-0 bg-white z-10">
+              <h2 className="text-lg font-semibold">
+                Phiếu Sửa Chữa - {selectedVehicle.licensePlate}
+              </h2>
+              <button onClick={handleCloseRepairModal} className="text-gray-500 hover:text-gray-700">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleSubmitRepair} className="p-6">
+              {/* Vehicle Info Header */}
+              <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <span className="font-medium">Biển số xe:</span> {selectedVehicle.licensePlate}
+                  </div>
+                  <div>
+                    <span className="font-medium">Ngày sửa chữa:</span> {new Date().toLocaleDateString('vi-VN')}
+                  </div>
+                </div>
+              </div>
+
+              {/* Repair Details Table */}
+              <div className="mb-6">
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse border border-gray-300">
+                    <thead>
+                      <tr className="bg-gray-800 text-white">
+                        <th className="border border-gray-300 px-2 py-2 text-sm">STT</th>
+                        <th className="border border-gray-300 px-2 py-2 text-sm">Nội Dung</th>
+                        <th className="border border-gray-300 px-2 py-2 text-sm">Vật Tư Phụ Tùng</th>
+                        <th className="border border-gray-300 px-2 py-2 text-sm">Số Lượng</th>
+                        <th className="border border-gray-300 px-2 py-2 text-sm">Đơn Giá</th>
+                        <th className="border border-gray-300 px-2 py-2 text-sm">Tiền Công</th>
+                        <th className="border border-gray-300 px-2 py-2 text-sm">Thành Tiền</th>
+                        <th className="border border-gray-300 px-2 py-2 text-sm">Thao tác</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {repairFormData.repairDetails.map((detail, index) => (
+                        <tr key={index}>
+                          <td className="border border-gray-300 px-2 py-2 text-center">
+                            {detail.stt}
+                          </td>
+                          <td className="border border-gray-300 px-2 py-2">
+                            <input
+                              type="text"
+                              value={detail.description}
+                              onChange={(e) => handleRepairInputChange(index, 'description', e.target.value)}
+                              className="w-full px-2 py-1 border-0 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              placeholder="Mô tả công việc"
+                            />
+                          </td>
+                          <td className="border border-gray-300 px-2 py-2">
+                            <input
+                              type="text"
+                              value={detail.partName}
+                              onChange={(e) => handleRepairInputChange(index, 'partName', e.target.value)}
+                              className="w-full px-2 py-1 border-0 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              placeholder="Tên phụ tùng"
+                            />
+                          </td>
+                          <td className="border border-gray-300 px-2 py-2">
+                            <input
+                              type="number"
+                              value={detail.quantity}
+                              onChange={(e) => handleRepairInputChange(index, 'quantity', e.target.value)}
+                              className="w-full px-2 py-1 border-0 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              placeholder="0"
+                              min="0"
+                            />
+                          </td>
+                          <td className="border border-gray-300 px-2 py-2">
+                            <input
+                              type="number"
+                              value={detail.unitPrice}
+                              onChange={(e) => handleRepairInputChange(index, 'unitPrice', e.target.value)}
+                              className="w-full px-2 py-1 border-0 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              placeholder="0"
+                              min="0"
+                            />
+                          </td>
+                          <td className="border border-gray-300 px-2 py-2">
+                            <input
+                              type="number"
+                              value={detail.laborCost}
+                              onChange={(e) => handleRepairInputChange(index, 'laborCost', e.target.value)}
+                              className="w-full px-2 py-1 border-0 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              placeholder="0"
+                              min="0"
+                            />
+                          </td>
+                          <td className="border border-gray-300 px-2 py-2 text-right font-medium">
+                            {detail.totalCost ? parseInt(detail.totalCost).toLocaleString('vi-VN') : '0'}
+                          </td>
+                          <td className="border border-gray-300 px-2 py-2 text-center">
+                            <button
+                              type="button"
+                              onClick={() => removeRepairRow(index)}
+                              className="text-red-600 hover:text-red-900 text-sm"
+                              disabled={repairFormData.repairDetails.length === 1}
+                            >
+                              Xóa
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                
+                <div className="mt-4 flex justify-between items-center">
+                  <button
+                    type="button"
+                    onClick={addRepairRow}
+                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                  >
+                    Thêm dòng
+                  </button>
+                  
+                  <div className="text-lg font-bold">
+                    Tổng cộng: {repairFormData.repairDetails.reduce((sum, detail) => 
+                      sum + (parseFloat(detail.totalCost) || 0), 0
+                    ).toLocaleString('vi-VN')} đ
+                  </div>
+                </div>
+              </div>
+
+              {/* Notes */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Ghi chú</label>
+                <textarea
+                  value={repairFormData.notes}
+                  onChange={(e) => setRepairFormData({...repairFormData, notes: e.target.value})}
+                  rows={3}
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Ghi chú thêm về tình trạng xe hoặc yêu cầu đặc biệt..."
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-3 pt-4 border-t">
+                <button
+                  type="button"
+                  onClick={handleCloseRepairModal}
+                  className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                >
+                  Tạo phiếu sửa chữa
                 </button>
               </div>
             </form>

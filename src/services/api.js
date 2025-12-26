@@ -157,6 +157,23 @@ class ApiService {
   async deleteVehicle(id) {
     return this.delete(`/vehicles/${id}`);
   }
+
+  // Repair management methods
+  async getRepairs(params = {}) {
+    return this.get('/repairs', params);
+  }
+
+  async createRepair(repairData) {
+    return this.post('/repairs', repairData);
+  }
+
+  async updateRepair(id, repairData) {
+    return this.put(`/repairs/${id}`, repairData);
+  }
+
+  async getRepairDetails(id) {
+    return this.get(`/repairs/${id}/details`);
+  }
 }
 
 // Create singleton instance
