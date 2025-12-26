@@ -214,7 +214,7 @@ const Vehicles = () => {
         })).filter(detail => detail.description.trim() !== ' - ')
       };
 
-      const response = await apiService.createRepair(repairData);
+      const response = await apiService.createDirectRepair(repairData);
       if (response.success) {
         alert('Tạo phiếu sửa chữa thành công!');
         handleCloseRepairModal();

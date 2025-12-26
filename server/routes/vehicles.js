@@ -4,7 +4,88 @@ import { authenticate } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Apply authentication to all routes
+// Special route without authentication for repair creation (testing)
+const repairRouter = express.Router();
+
+// POST /api/vehicles/:id/repairs - Create repair for specific vehicle (NO AUTH for testing)
+repairRouter.post('/:id/repairs', async (req, res) => {
+  try {
+    console.log('🔥 CREATE REPAIR FOR VEHICLE (NO AUTH):', req.params.id, req.body);
+    
+    const vehicleId = req.params.id;
+    const { notes, repairDetails } = req.body;
+
+    // Check if vehicle exists
+    const vehicle = await executeQuery(
+      'SELECT * FROM XE WHERE MaXe = ?',
+      [vehicleId]
+    );
+
+    if (vehicle.length === 0) {
+      return res.status(400).json({
+        success: false,
+        data: null,
+        message: 'Xe không tồn tại'
+      });
+    }
+
+    // Insert new repair order
+    const result = await executeQuery(
+      'INSERT INTO PHIEUSUA (MaXe, NgayVao, TongTien, TrangThai, GhiChu, MaTaiKhoan) VALUES (?, datetime("now"), 0, "DANG_SUA", ?, ?)',
+      [vehicleId, notes || '', 1] // Tạm thời dùng user ID = 1
+    );
+
+    const repairId = result.lastID;
+
+    // Insert repair details if provided
+    if (repairDetails && repairDetails.length > 0) {
+      for (const detail of repairDetails) {
+        if (detail.description && detail.description.trim() !== ' - ') {
+          await executeQuery(
+            'INSERT INTO CHITIETPHIEUSUA (MaPhieuSua, NoiDungSua, ChiPhiSua) VALUES (?, ?, ?)',
+            [repairId, detail.description, detail.cost || 0]
+          );
+        }
+      }
+    }
+
+    // Calculate total amount
+    const totalResult = await executeQuery(
+      'SELECT SUM(ChiPhiSua) as total FROM CHITIETPHIEUSUA WHERE MaPhieuSua = ?',
+      [repairId]
+    );
+
+    const totalAmount = totalResult[0]?.total || 0;
+
+    // Update total amount
+    await executeQuery(
+      'UPDATE PHIEUSUA SET TongTien = ? WHERE MaPhieuSua = ?',
+      [totalAmount, repairId]
+    );
+
+    res.status(201).json({
+      success: true,
+      data: {
+        id: repairId,
+        vehicleId: vehicleId,
+        totalAmount: totalAmount,
+        status: 'DANG_SUA',
+        notes: notes,
+        dateIn: new Date().toISOString()
+      },
+      message: 'Tạo phiếu sửa chữa thành công'
+    });
+  } catch (error) {
+    console.error('Error creating repair:', error);
+    res.status(500).json({
+      success: false,
+      data: null,
+      message: 'Lỗi khi tạo phiếu sửa chữa: ' + error.message
+    });
+  }
+});
+
+// Apply authentication to all other routes
 router.use(authenticate);
 
 // GET /api/vehicles - Get all vehicles with customer info
@@ -321,3 +402,4 @@ router.delete('/:id', async (req, res) => {
 });
 
 export default router;
+export { repairRouter };

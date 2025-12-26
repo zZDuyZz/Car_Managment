@@ -158,6 +158,11 @@ class ApiService {
     return this.delete(`/vehicles/${id}`);
   }
 
+  // Create repair using direct endpoint
+  async createDirectRepair(repairData) {
+    return this.post('/create-repair', repairData);
+  }
+
   // Repair management methods
   async getRepairs(params = {}) {
     return this.get('/repairs', params);

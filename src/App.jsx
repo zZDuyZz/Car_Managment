@@ -28,8 +28,8 @@ function App() {
     }, []);
 
     const handleLoginSuccess = (role) => {
-        localStorage.setItem('isLoggedIn', JSON.stringify(true));
-        localStorage.setItem('userRole', role);
+        // Token đã được lưu trong apiService.login()
+        // Chỉ cần update state
         setIsLoggedIn(true);
         setUserRole(role);
     };
