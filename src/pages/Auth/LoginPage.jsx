@@ -1,41 +1,33 @@
 import React, { useState } from "react";
-import { useNavigate } from 'react-router-dom';
 
 const LoginPage = ({ onLoginSuccess }) => {
     const [isLoggingIn, setIsLoggingIn] = useState(false);
-    const [email, setEmail] = useState('');
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    const navigate = useNavigate();
 
     const handleLogin = (e) => {
         e.preventDefault();
-        if (!email || !password) {
+        if (!username || !password) {
             alert("Vui lòng điền đầy đủ thông tin đăng nhập!");
             return;
         }
         
         setIsLoggingIn(true);
         
-        // Mock login logic
-        const mockAdminEmail = "admin@example.com";
-        const mockAdminPassword = "123456";
-        const mockStaffEmail = "staff@example.com";
+        // Mock login logic - Updated to match database
+        const mockAdminUsername = "admin";
+        const mockAdminPassword = "admin123";
+        const mockStaffUsername = "staff";
         const mockStaffPassword = "staff123";
 
         setTimeout(() => {
             setIsLoggingIn(false);
-            if (email === mockAdminEmail && password === mockAdminPassword) {
-                if (onLoginSuccess) {
-                    onLoginSuccess('admin');
-                    navigate('/admin/accounts');
-                }
-            } else if (email === mockStaffEmail && password === mockStaffPassword) {
-                if (onLoginSuccess) {
-                    onLoginSuccess('staff');
-                    navigate('/customers');
-                }
+            if (username === mockAdminUsername && password === mockAdminPassword) {
+                onLoginSuccess('admin');
+            } else if (username === mockStaffUsername && password === mockStaffPassword) {
+                onLoginSuccess('staff');
             } else {
-                alert("Email hoặc mật khẩu không chính xác!");
+                alert("Tên đăng nhập hoặc mật khẩu không chính xác!");
             }
         }, 1000);
     };
@@ -53,16 +45,16 @@ const LoginPage = ({ onLoginSuccess }) => {
                 <form className="mt-8 space-y-6" onSubmit={handleLogin}>
                     <div className="space-y-4">
                         <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                                Email
+                            <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
+                                Tên đăng nhập
                             </label>
                             <input
-                                id="email"
-                                type="email"
+                                id="username"
+                                type="text"
                                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400"
-                                placeholder="Nhập email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="Nhập tên đăng nhập"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
                             />
                         </div>
                         <div>

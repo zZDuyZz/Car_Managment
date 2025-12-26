@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+
+// Import components
 import LoginPage from './pages/Auth/LoginPage';
 import SignUpPage from './pages/Auth/SignUpPage';
 import StaffLayout from './layouts/StaffLayout';
 import AdminLayout from './layouts/AdminLayout';
 
-// Staff components
+// Staff pages
 import Customers from './pages/Staff/Customers';
 import Vehicles from './pages/Staff/Vehicles';
 import Repairs from './pages/Staff/Repairs';
@@ -14,127 +16,131 @@ import SpareParts from './pages/Staff/SpareParts';
 import Invoices from './pages/Staff/Invoices';
 import Search from './pages/Staff/Search';
 
-// Admin components
+// Admin pages
 import Accounts from './pages/Admin/Accounts';
 import Reports from './pages/Admin/Reports';
 import ImportGoods from './pages/Admin/ImportGoods';
 import AdminSettings from './pages/Admin/AdminSettings';
 
 function App() {
-    const [isLoggedIn, setIsLoggedIn] = useState(
-        JSON.parse(localStorage.getItem('isLoggedIn')) || false
-    );
-    const [userRole, setUserRole] = useState(
-        localStorage.getItem('userRole') || null
-    );
-    const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-    const handleLoginSuccess = (role) => {
-        localStorage.setItem('isLoggedIn', JSON.stringify(true));
-        localStorage.setItem('userRole', role);
-        setIsLoggedIn(true);
-        setUserRole(role);
+  // Load user from localStorage on app start
+  useEffect(() => {
+    try {
+      const savedUser = localStorage.getItem('user');
+      if (savedUser) {
+        setUser(JSON.parse(savedUser));
+      }
+    } catch (error) {
+      console.error('Error loading user:', error);
+      localStorage.removeItem('user');
+    }
+    setLoading(false);
+  }, []);
+
+  const handleLogin = (role) => {
+    const userData = { role, isLoggedIn: true };
+    setUser(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem('user');
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Đang tải...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <BrowserRouter>
+      <Routes>
+        {/* Public routes */}
+        <Route 
+          path="/login" 
+          element={
+            user?.isLoggedIn ? (
+              <Navigate to={user.role === 'admin' ? '/admin' : '/staff'} replace />
+            ) : (
+              <LoginPage onLoginSuccess={handleLogin} />
+            )
+          } 
+        />
         
-        if (role === 'admin') {
-            navigate('/admin');
-        } else {
-            navigate('/staff');
-        }
-    };
+        <Route path="/signup" element={<SignUpPage />} />
 
-    const handleSignUpSuccess = () => {
-        navigate('/login');
-    };
+        {/* Admin routes */}
+        <Route 
+          path="/admin" 
+          element={
+            user?.isLoggedIn && user?.role === 'admin' ? (
+              <AdminLayout onLogout={handleLogout} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        >
+          <Route index element={<Navigate to="/admin/accounts" replace />} />
+          <Route path="accounts" element={<Accounts />} />
+          <Route path="reports" element={<Reports />} />
+          <Route path="import" element={<ImportGoods />} />
+          <Route path="settings" element={<AdminSettings />} />
+        </Route>
 
-    const handleLogout = () => {
-        localStorage.clear();
-        setIsLoggedIn(false);
-        navigate('/login');
-    };
+        {/* Staff routes */}
+        <Route 
+          path="/staff" 
+          element={
+            user?.isLoggedIn && user?.role === 'staff' ? (
+              <StaffLayout onLogout={handleLogout} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        >
+          <Route index element={<Navigate to="/staff/customers" replace />} />
+          <Route path="customers" element={<Customers />} />
+          <Route path="vehicles" element={<Vehicles />} />
+          <Route path="repairs" element={<Repairs />} />
+          <Route path="services" element={<RepairServices />} />
+          <Route path="parts" element={<SpareParts />} />
+          <Route path="invoices" element={<Invoices />} />
+          <Route path="search" element={<Search />} />
+          
+          {/* New item routes */}
+          <Route path="customers/new" element={<div className="p-6">Thêm khách hàng mới</div>} />
+          <Route path="vehicles/new" element={<div className="p-6">Thêm xe mới</div>} />
+          <Route path="repairs/new" element={<div className="p-6">Tạo phiếu sửa chữa mới</div>} />
+          <Route path="invoices/new" element={<div className="p-6">Tạo hóa đơn mới</div>} />
+        </Route>
 
-    return (
-        <Routes>
-            <Route path="/login" element={
-                isLoggedIn ? <Navigate to={userRole === 'admin' ? '/admin/accounts' : '/customers'} replace /> : 
-                <LoginPage onLoginSuccess={handleLoginSuccess} />
-            } />
-            <Route path="/signup" element={<SignUpPage onSignUpSuccess={handleSignUpSuccess} />} />
-            
-            {/* Admin Routes */}
-            <Route path="/admin" element={
-                isLoggedIn && userRole === 'admin' ? <AdminLayout onLogout={handleLogout} /> : <Navigate to="/login" replace />
-            }>
-                <Route index element={<Navigate to="/admin/accounts" replace />} />
-                <Route path="accounts" element={<Accounts />} />
-                
-                {/* Reports */}
-                <Route path="reports" element={<Reports />} />
-                
-                {/* Import Goods */}
-                <Route path="import" element={<ImportGoods />} />
-                
-                {/* Settings */}
-                <Route path="settings" element={<AdminSettings />} />
+        {/* Root redirect */}
+        <Route 
+          path="/" 
+          element={
+            user?.isLoggedIn ? (
+              <Navigate to={user.role === 'admin' ? '/admin' : '/staff'} replace />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          } 
+        />
 
-                
-                <Route path="*" element={<Navigate to="/admin/accounts" replace />} />
-            </Route>
-            
-            <Route path="/staff" element={
-                isLoggedIn && userRole === 'staff' ? <StaffLayout onLogout={handleLogout} /> : <Navigate to="/login" replace />
-            }>
-                <Route index element={<Navigate to="/staff/customers" replace />} />
-                <Route path="dashboard" element={<div>Dashboard Content</div>} />
-                <Route path="customers" element={<Customers />} />
-                <Route path="vehicles" element={<Vehicles />} />
-                <Route path="repairs" element={<Repairs />} />
-                <Route path="services" element={<RepairServices />} />
-                <Route path="parts" element={<SpareParts />} />
-                <Route path="invoices" element={<Invoices />} />
-                <Route path="search" element={<Search />} />
-                
-                {/* New item routes */}
-                <Route path="customers/new" element={<div>New Customer Form</div>} />
-                <Route path="vehicles/new" element={<div>New Vehicle Form</div>} />
-                <Route path="repairs/new" element={<div>New Repair Form</div>} />
-                <Route path="invoices/new" element={<div>New Invoice Form</div>} />
-            </Route>
-            
-            {/* Redirect old routes to new /staff paths */}
-            <Route path="/customers" element={
-                isLoggedIn && userRole === 'staff' ? <Navigate to="/staff/customers" replace /> : <Navigate to="/login" replace />
-            } />
-            <Route path="/vehicles" element={
-                isLoggedIn && userRole === 'staff' ? <Navigate to="/staff/vehicles" replace /> : <Navigate to="/login" replace />
-            } />
-            <Route path="/repairs" element={
-                isLoggedIn && userRole === 'staff' ? <Navigate to="/staff/repairs" replace /> : <Navigate to="/login" replace />
-            } />
-            <Route path="/repair-services" element={
-                isLoggedIn && userRole === 'staff' ? <Navigate to="/staff/services" replace /> : <Navigate to="/login" replace />
-            } />
-            <Route path="/spare-parts" element={
-                isLoggedIn && userRole === 'staff' ? <Navigate to="/staff/parts" replace /> : <Navigate to="/login" replace />
-            } />
-            <Route path="/invoices" element={
-                isLoggedIn && userRole === 'staff' ? <Navigate to="/staff/invoices" replace /> : <Navigate to="/login" replace />
-            } />
-            <Route path="/search" element={
-                isLoggedIn && userRole === 'staff' ? <Navigate to="/staff/search" replace /> : <Navigate to="/login" replace />
-            } />
-            
-            <Route path="/" element={<Navigate to="/login" replace />} />
-            <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-    );
+        {/* Catch all */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
-function AppWrapper() {
-    return (
-        <Router>
-            <App />
-        </Router>
-    );
-}
-
-export default AppWrapper;
+export default App;
