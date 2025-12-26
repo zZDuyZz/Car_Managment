@@ -448,11 +448,35 @@ const RepairModal = ({ vehicle, onClose, onSave }) => {
   const [repairData, setRepairData] = useState({
     repairDate: new Date().toISOString().split('T')[0],
     details: [
-      { id: 1, description: '', partName: '', quantity: 1, unitPrice: 0, laborCost: 0, totalPrice: 0 }
+      { id: 1, description: '', serviceId: '', partId: '', quantity: 1, unitPrice: 0, laborCost: 0, totalPrice: 0, maxQuantity: 0 }
     ]
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [parts, setParts] = useState([]);
+  const [services, setServices] = useState([]);
+
+  // Fetch parts and services
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [partsResponse, servicesResponse] = await Promise.all([
+          fetch('http://localhost:3001/api/parts'),
+          fetch('http://localhost:3001/api/services')
+        ]);
+        
+        const partsData = await partsResponse.json();
+        const servicesData = await servicesResponse.json();
+        
+        if (partsData.success) setParts(partsData.data);
+        if (servicesData.success) setServices(servicesData.data);
+      } catch (err) {
+        console.error('Error fetching data:', err);
+      }
+    };
+    
+    fetchData();
+  }, []);
 
   const addRow = () => {
     const newId = Math.max(...repairData.details.map(d => d.id)) + 1;
@@ -461,11 +485,13 @@ const RepairModal = ({ vehicle, onClose, onSave }) => {
       details: [...prev.details, {
         id: newId,
         description: '',
-        partName: '',
+        serviceId: '',
+        partId: '',
         quantity: 1,
         unitPrice: 0,
         laborCost: 0,
-        totalPrice: 0
+        totalPrice: 0,
+        maxQuantity: 0
       }]
     }));
   };
@@ -475,21 +501,46 @@ const RepairModal = ({ vehicle, onClose, onSave }) => {
       ...prev,
       details: prev.details.map(detail => {
         if (detail.id === id) {
-          let processedValue = value;
+          let updated = { ...detail, [field]: value };
           
-          // Convert text to number for numeric fields
-          if (field === 'quantity' || field === 'unitPrice' || field === 'laborCost') {
-            // Remove any non-numeric characters except decimal point
-            const cleanValue = value.toString().replace(/[^\d.]/g, '');
-            processedValue = parseFloat(cleanValue) || 0;
+          // Handle service selection
+          if (field === 'serviceId') {
+            const selectedService = services.find(s => s.MaTC === parseInt(value));
+            if (selectedService) {
+              updated.laborCost = selectedService.ChiPhi;
+              updated.description = selectedService.TenTienCong;
+            } else {
+              updated.laborCost = 0;
+              updated.description = '';
+            }
           }
           
-          const updated = { ...detail, [field]: processedValue };
+          // Handle part selection
+          if (field === 'partId') {
+            const selectedPart = parts.find(p => p.MaPhuTung === parseInt(value));
+            if (selectedPart) {
+              updated.unitPrice = selectedPart.DonGia;
+              updated.maxQuantity = selectedPart.SoLuong;
+              // Reset quantity if it exceeds available stock
+              if (updated.quantity > selectedPart.SoLuong) {
+                updated.quantity = Math.min(updated.quantity, selectedPart.SoLuong);
+              }
+            } else {
+              updated.unitPrice = 0;
+              updated.maxQuantity = 0;
+            }
+          }
+          
+          // Handle quantity validation
+          if (field === 'quantity') {
+            const cleanValue = value.toString().replace(/[^\d]/g, '');
+            const numValue = parseInt(cleanValue) || 1;
+            updated.quantity = Math.min(Math.max(numValue, 1), updated.maxQuantity || 999);
+          }
           
           // Auto-calculate total price
-          if (field === 'quantity' || field === 'unitPrice' || field === 'laborCost') {
-            updated.totalPrice = (updated.quantity * updated.unitPrice) + updated.laborCost;
-          }
+          updated.totalPrice = (updated.quantity * updated.unitPrice) + updated.laborCost;
+          
           return updated;
         }
         return detail;
@@ -542,7 +593,7 @@ const RepairModal = ({ vehicle, onClose, onSave }) => {
       // Add repair details - only add rows that have meaningful data
       let detailsAdded = 0;
       for (const detail of repairData.details) {
-        if (detail.description.trim() || detail.partName.trim() || detail.quantity > 0 || detail.unitPrice > 0 || detail.laborCost > 0) {
+        if (detail.serviceId || detail.partId) {
           console.log('Adding detail:', detail);
           
           const detailResponse = await fetch(`http://localhost:3001/api/repairs/${repairId}/details`, {
@@ -551,7 +602,8 @@ const RepairModal = ({ vehicle, onClose, onSave }) => {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              serviceId: 1, // Default service ID - in real app, you'd select from dropdown
+              serviceId: detail.serviceId || null,
+              partId: detail.partId || null,
               quantity: detail.quantity,
               unitPrice: detail.unitPrice
             })
@@ -646,8 +698,8 @@ const RepairModal = ({ vehicle, onClose, onSave }) => {
                 <thead className="bg-gray-800 text-white">
                   <tr>
                     <th className="px-4 py-2 text-left text-xs font-medium uppercase">STT</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium uppercase">Nội dung</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium uppercase">Vật tư/Phụ tùng</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium uppercase">Dịch vụ</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium uppercase">Phụ tùng</th>
                     <th className="px-4 py-2 text-left text-xs font-medium uppercase">Số lượng</th>
                     <th className="px-4 py-2 text-left text-xs font-medium uppercase">Đơn giá</th>
                     <th className="px-4 py-2 text-left text-xs font-medium uppercase">Tiền công</th>
@@ -658,61 +710,76 @@ const RepairModal = ({ vehicle, onClose, onSave }) => {
                 <tbody>
                   {repairData.details.map((detail, index) => (
                     <tr key={detail.id}>
-                      <td className="px-4 py-2 border-b">{index + 1}</td>
-                      <td className="px-4 py-2 border-b">
-                        <input 
-                          type="text" 
+                      <td className="px-4 py-2 border-b align-top">{index + 1}</td>
+                      <td className="px-4 py-2 border-b align-top">
+                        <select 
                           className="w-full px-2 py-1 border rounded" 
-                          placeholder="Mô tả công việc..." 
-                          value={detail.description}
-                          onChange={(e) => updateDetail(detail.id, 'description', e.target.value)}
-                        />
+                          value={detail.serviceId}
+                          onChange={(e) => updateDetail(detail.id, 'serviceId', e.target.value)}
+                        >
+                          <option value="">-- Chọn dịch vụ --</option>
+                          {services.map(service => (
+                            <option key={service.MaTC} value={service.MaTC}>
+                              {service.TenTienCong} - {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(service.ChiPhi)}
+                            </option>
+                          ))}
+                        </select>
                       </td>
-                      <td className="px-4 py-2 border-b">
-                        <input 
-                          type="text" 
+                      <td className="px-4 py-2 border-b align-top">
+                        <select 
                           className="w-full px-2 py-1 border rounded" 
-                          placeholder="Tên phụ tùng..." 
-                          value={detail.partName}
-                          onChange={(e) => updateDetail(detail.id, 'partName', e.target.value)}
-                        />
+                          value={detail.partId}
+                          onChange={(e) => updateDetail(detail.id, 'partId', e.target.value)}
+                        >
+                          <option value="">-- Chọn phụ tùng --</option>
+                          {parts.map(part => (
+                            <option key={part.MaPhuTung} value={part.MaPhuTung} disabled={part.SoLuong === 0}>
+                              {part.TenVatTuPhuTung} - {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(part.DonGia)} 
+                              {part.SoLuong === 0 ? ' (Hết hàng)' : ` (Còn: ${part.SoLuong})`}
+                            </option>
+                          ))}
+                        </select>
                       </td>
-                      <td className="px-4 py-2 border-b">
+                      <td className="px-4 py-2 border-b align-top">
                         <input 
                           type="text" 
                           className="w-full px-2 py-1 border rounded" 
                           placeholder="1" 
                           value={detail.quantity}
                           onChange={(e) => updateDetail(detail.id, 'quantity', e.target.value)}
+                          max={detail.maxQuantity}
                         />
+                        {detail.maxQuantity > 0 && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            Tối đa: {detail.maxQuantity}
+                          </div>
+                        )}
                       </td>
-                      <td className="px-4 py-2 border-b">
-                        <input 
-                          type="text" 
-                          className="w-full px-2 py-1 border rounded" 
-                          placeholder="0" 
-                          value={detail.unitPrice}
-                          onChange={(e) => updateDetail(detail.id, 'unitPrice', e.target.value)}
-                        />
-                      </td>
-                      <td className="px-4 py-2 border-b">
-                        <input 
-                          type="text" 
-                          className="w-full px-2 py-1 border rounded" 
-                          placeholder="0" 
-                          value={detail.laborCost}
-                          onChange={(e) => updateDetail(detail.id, 'laborCost', e.target.value)}
-                        />
-                      </td>
-                      <td className="px-4 py-2 border-b">
+                      <td className="px-4 py-2 border-b align-top">
                         <input 
                           type="text" 
                           className="w-full px-2 py-1 border rounded bg-gray-50" 
-                          value={detail.totalPrice}
+                          value={new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(detail.unitPrice)}
                           disabled 
                         />
                       </td>
-                      <td className="px-4 py-2 border-b">
+                      <td className="px-4 py-2 border-b align-top">
+                        <input 
+                          type="text" 
+                          className="w-full px-2 py-1 border rounded bg-gray-50" 
+                          value={new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(detail.laborCost)}
+                          disabled 
+                        />
+                      </td>
+                      <td className="px-4 py-2 border-b align-top">
+                        <input 
+                          type="text" 
+                          className="w-full px-2 py-1 border rounded bg-gray-50" 
+                          value={new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(detail.totalPrice)}
+                          disabled 
+                        />
+                      </td>
+                      <td className="px-4 py-2 border-b align-top">
                         {repairData.details.length > 1 && (
                           <button
                             onClick={() => removeRow(detail.id)}
