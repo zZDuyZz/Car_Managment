@@ -12,6 +12,7 @@ import repairRoutes from './routes/repairs.js';
 import serviceRoutes from './routes/services.js';
 import partRoutes from './routes/parts.js';
 import paymentRoutes from './routes/payments.js';
+import reportRoutes from './routes/reports.js';
 import demoRoutes from './routes/demo.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -34,6 +35,7 @@ app.use('/api/repairs', repairRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/parts', partRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/reports', reportRoutes);
 app.use('/api/demo', demoRoutes);
 
 // Health check

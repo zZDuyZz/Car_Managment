@@ -202,6 +202,32 @@ export const queries = {
     VALUES (?, ?, ?, datetime('now', 'localtime'))
   `),
   deletePayment: db.prepare('DELETE FROM PHIEUTHUTIEN WHERE MaPhieuThuTien = ?'),
+  
+  // Report queries
+  getRevenueReport: db.prepare(`
+    SELECT 
+      strftime('%Y-%m', p.NgaySua) as Month,
+      COUNT(DISTINCT p.MaPhieuSuaChua) as CarsRepaired,
+      COALESCE(SUM(p.TienCong), 0) as TotalLaborCost,
+      COALESCE(SUM(p.TienPhuTung), 0) as TotalPartsCost,
+      COALESCE(SUM(p.TongTien), 0) as TotalRevenue
+    FROM PHIEUSUACHUA p
+    WHERE date(p.NgaySua) BETWEEN ? AND ?
+    GROUP BY strftime('%Y-%m', p.NgaySua)
+    ORDER BY Month
+  `),
+  
+  getInventoryReport: db.prepare(`
+    SELECT 
+      k.MaPhuTung,
+      k.TenVatTuPhuTung,
+      k.SoLuong as CurrentStock,
+      0 as TotalImported,
+      0 as TotalUsed,
+      k.SoLuong as BeginningBalance
+    FROM KHO k
+    ORDER BY k.TenVatTuPhuTung
+  `),
 };
 
 export default db;
