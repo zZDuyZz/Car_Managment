@@ -3,8 +3,8 @@ import { BarChart3, FileText, Download, Calendar } from 'lucide-react';
 
 const Reports = () => {
     const [formData, setFormData] = useState({
-        fromDate: '',
-        toDate: '',
+        month: '12',
+        year: '2025',
         reportType: 'revenue' // revenue | inventory
     });
     const [reportData, setReportData] = useState(null);
@@ -25,7 +25,12 @@ const Reports = () => {
         setError('');
         
         try {
-            const response = await fetch(`http://localhost:3001/api/reports/${formData.reportType}?fromDate=${formData.fromDate}&toDate=${formData.toDate}`);
+            // Tạo fromDate và toDate từ month/year
+            const fromDate = `${formData.year}-${formData.month.padStart(2, '0')}-01`;
+            const lastDay = new Date(formData.year, formData.month, 0).getDate();
+            const toDate = `${formData.year}-${formData.month.padStart(2, '0')}-${lastDay}`;
+            
+            const response = await fetch(`http://localhost:3001/api/reports/${formData.reportType}?fromDate=${fromDate}&toDate=${toDate}`);
             const result = await response.json();
             
             if (result.success) {
@@ -52,7 +57,7 @@ const Reports = () => {
         const link = document.createElement('a');
         const url = URL.createObjectURL(blob);
         link.setAttribute('href', url);
-        link.setAttribute('download', `${formData.reportType}_report_${formData.fromDate}_${formData.toDate}.csv`);
+        link.setAttribute('download', `${formData.reportType}_report_${formData.month}_${formData.year}.csv`);
         link.style.visibility = 'hidden';
         document.body.appendChild(link);
         link.click();
