@@ -1,21 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import { Shield, Key, Lock, Unlock } from 'lucide-react';
 
 const API_BASE_URL = 'http://localhost:3001/api';
 
 const Accounts = () => {
   const [accounts, setAccounts] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingId, setEditingId] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [editingAccount, setEditingAccount] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    username: '',
-    password: '',
-    fullName: '',
-    role: 'staff',
-    status: 'active',
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
   });
   const [passwordError, setPasswordError] = useState('');
 
@@ -23,11 +21,19 @@ const Accounts = () => {
   const fetchAccounts = async () => {
     try {
       setLoading(true);
+      console.log('Fetching accounts...');
       const response = await fetch(`${API_BASE_URL}/accounts`);
       const result = await response.json();
       
+      console.log('Fetch accounts response:', result);
+      
       if (result.success) {
-        setAccounts(result.data);
+        // Only show admin and staff accounts, limit to 2 accounts
+        const systemAccounts = result.data.filter(account => 
+          account.role === 'admin' || account.role === 'staff'
+        ).slice(0, 2);
+        console.log('Setting accounts:', systemAccounts);
+        setAccounts(systemAccounts);
       } else {
         console.error('Failed to fetch accounts:', result.error);
         alert('Không thể tải danh sách tài khoản');
@@ -44,122 +50,113 @@ const Accounts = () => {
     fetchAccounts();
   }, []);
 
-  const handleInputChange = (e) => {
+  const handlePasswordChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setPasswordData(prev => ({ ...prev, [name]: value }));
     
-    if (name === 'password') {
+    if (name === 'newPassword') {
       if (value.length < 6) {
-        setPasswordError('Mật khẩu phải có ít nhất 6 ký tự');
+        setPasswordError('Mật khẩu mới phải có ít nhất 6 ký tự');
+      } else {
+        setPasswordError('');
+      }
+    }
+    
+    if (name === 'confirmPassword') {
+      if (value !== passwordData.newPassword) {
+        setPasswordError('Xác nhận mật khẩu không khớp');
       } else {
         setPasswordError('');
       }
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handlePasswordSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.username || !formData.password || !formData.fullName) {
+    if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
       alert('Vui lòng điền đầy đủ thông tin');
       return;
     }
 
-    if (formData.password.length < 6) {
-      alert('Mật khẩu phải có ít nhất 6 ký tự');
+    if (passwordData.newPassword.length < 6) {
+      alert('Mật khẩu mới phải có ít nhất 6 ký tự');
+      return;
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      alert('Xác nhận mật khẩu không khớp');
       return;
     }
 
     try {
       setLoading(true);
       
-      if (editingId) {
-        // Update existing account
-        const response = await fetch(`${API_BASE_URL}/accounts/${editingId}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            username: formData.username,
-            password: formData.password,
-            fullName: formData.fullName,
-            role: formData.role,
-          }),
-        });
+      const response = await fetch(`${API_BASE_URL}/accounts/${editingAccount.id}/password`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword,
+        }),
+      });
 
-        const result = await response.json();
-        
-        if (result.success) {
-          alert('Cập nhật tài khoản thành công!');
-          await fetchAccounts(); // Refresh list
-          handleCloseModal();
-        } else {
-          alert(result.error || 'Không thể cập nhật tài khoản');
-        }
+      const result = await response.json();
+      
+      if (result.success) {
+        alert('Thay đổi mật khẩu thành công!');
+        handleClosePasswordModal();
       } else {
-        // Create new account
-        const response = await fetch(`${API_BASE_URL}/accounts`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            username: formData.username,
-            password: formData.password,
-            fullName: formData.fullName,
-            role: formData.role,
-          }),
-        });
-
-        const result = await response.json();
-        
-        if (result.success) {
-          alert('Tạo tài khoản thành công!');
-          await fetchAccounts(); // Refresh list
-          handleCloseModal();
-        } else {
-          alert(result.error || 'Không thể tạo tài khoản');
-        }
+        alert(result.error || 'Không thể thay đổi mật khẩu');
       }
     } catch (error) {
-      console.error('Error submitting form:', error);
+      console.error('Error changing password:', error);
       alert('Lỗi kết nối đến server');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleEdit = (account) => {
-    setEditingId(account.id);
-    setFormData({
-      username: account.username,
-      password: '', // Don't pre-fill password for security
-      fullName: account.fullName,
-      role: account.role,
-      status: 'active', // API doesn't handle status yet
-    });
-    setIsModalOpen(true);
-  };
+  const handleToggleAccess = async (account) => {
+    // Only allow toggling staff access, not admin
+    if (account.role === 'admin') {
+      alert('Không thể khóa tài khoản Admin');
+      return;
+    }
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa tài khoản này?')) {
+    const newStatus = account.status === 'active' ? 'locked' : 'active';
+    const action = newStatus === 'locked' ? 'khóa' : 'mở khóa';
+    
+    if (window.confirm(`Bạn có chắc chắn muốn ${action} tài khoản ${account.username}?`)) {
       try {
         setLoading(true);
-        const response = await fetch(`${API_BASE_URL}/accounts/${id}`, {
-          method: 'DELETE',
+        console.log('Toggling account status:', { accountId: account.id, newStatus });
+        
+        const response = await fetch(`${API_BASE_URL}/accounts/${account.id}/status`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            status: newStatus,
+          }),
         });
 
         const result = await response.json();
+        console.log('Toggle response:', result);
         
         if (result.success) {
-          alert('Xóa tài khoản thành công!');
+          alert(`${action.charAt(0).toUpperCase() + action.slice(1)} tài khoản thành công!`);
+          console.log('Refreshing accounts list...');
           await fetchAccounts(); // Refresh list
+          console.log('Accounts refreshed');
         } else {
-          alert(result.error || 'Không thể xóa tài khoản');
+          alert(result.error || `Không thể ${action} tài khoản`);
         }
       } catch (error) {
-        console.error('Error deleting account:', error);
+        console.error('Error toggling access:', error);
         alert('Lỗi kết nối đến server');
       } finally {
         setLoading(false);
@@ -167,64 +164,74 @@ const Accounts = () => {
     }
   };
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setEditingId(null);
-    setFormData({
-      username: '',
-      password: '',
-      fullName: '',
-      role: 'staff',
-      status: 'active',
+  const handleOpenPasswordModal = (account) => {
+    setEditingAccount(account);
+    setPasswordData({
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+    });
+    setPasswordError('');
+    setIsPasswordModalOpen(true);
+  };
+
+  const handleClosePasswordModal = () => {
+    setIsPasswordModalOpen(false);
+    setEditingAccount(null);
+    setPasswordData({
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
     });
     setPasswordError('');
   };
 
   const getRoleBadge = (role) => {
     return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+      <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${
         role === 'admin' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
       }`}>
-        {role === 'admin' ? 'Admin' : 'Staff'}
+        <Shield size={12} />
+        {role === 'admin' ? 'Quản trị viên' : 'Nhân viên'}
       </span>
     );
   };
 
   const getStatusBadge = (status) => {
     return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-        status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+      <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${
+        status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
       }`}>
-        {status === 'active' ? 'Hoạt động' : 'Khóa'}
+        {status === 'active' ? <Unlock size={12} /> : <Lock size={12} />}
+        {status === 'active' ? 'Hoạt động' : 'Bị khóa'}
       </span>
     );
   };
 
-  const filteredAccounts = accounts.filter(account =>
-    account.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    account.fullName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Quản lý tài khoản</h1>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center"
-        >
-          <span className="mr-2">+</span> Tạo tài khoản
-        </button>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+            <Shield className="text-blue-600" size={28} />
+            Bảo mật hệ thống
+          </h1>
+          <p className="text-gray-600 mt-1">Quản lý bảo mật và truy cập tài khoản hệ thống</p>
+        </div>
       </div>
 
-      <div className="mb-4">
-        <input
-          type="text"
-          placeholder="Tìm kiếm theo tên đăng nhập hoặc họ tên..."
-          className="w-full md:w-1/3 p-2 border rounded"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
+      {/* Security Info */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <div className="flex items-start gap-3">
+          <Shield className="text-blue-600 mt-1" size={20} />
+          <div>
+            <h3 className="font-medium text-blue-800">Thông tin bảo mật</h3>
+            <p className="text-blue-700 text-sm mt-1">
+              Hệ thống chỉ có 2 tài khoản cố định: <strong>Admin</strong> và <strong>Staff</strong>. 
+              Bạn có thể thay đổi mật khẩu và quản lý quyền truy cập của nhân viên.
+            </p>
+          </div>
+        </div>
       </div>
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -237,50 +244,61 @@ const Accounts = () => {
           <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên đăng nhập</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tài khoản</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Họ tên</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vai trò</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày tạo</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {filteredAccounts.length === 0 ? (
+            {accounts.length === 0 ? (
               <tr>
-                <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
+                <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
                   Không có tài khoản nào
                 </td>
               </tr>
             ) : (
-              filteredAccounts.map((account) => (
+              accounts.map((account) => (
                 <tr key={account.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{account.username}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className="text-sm font-medium text-gray-900">{account.username}</div>
+                    </div>
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{account.fullName}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {getRoleBadge(account.role)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      Hoạt động
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {account.createdAt ? format(new Date(account.createdAt), 'dd/MM/yyyy HH:mm', { locale: vi }) : 'N/A'}
+                    {getStatusBadge(account.status || 'active')}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button
-                      onClick={() => handleEdit(account)}
-                      className="text-blue-600 hover:text-blue-900 mr-4"
-                    >
-                      Sửa
-                    </button>
-                    <button
-                      onClick={() => handleDelete(account.id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      Xóa
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => handleOpenPasswordModal(account)}
+                        className="text-blue-600 hover:text-blue-900 flex items-center gap-1"
+                        title="Thay đổi mật khẩu"
+                      >
+                        <Key size={16} />
+                        Đổi mật khẩu
+                      </button>
+                      
+                      {account.role === 'staff' && (
+                        <button
+                          onClick={() => handleToggleAccess(account)}
+                          className={`flex items-center gap-1 ${
+                            account.status === 'active' 
+                              ? 'text-red-600 hover:text-red-900' 
+                              : 'text-green-600 hover:text-green-900'
+                          }`}
+                          title={account.status === 'active' ? 'Khóa truy cập' : 'Mở khóa truy cập'}
+                        >
+                          {account.status === 'active' ? <Lock size={16} /> : <Unlock size={16} />}
+                          {account.status === 'active' ? 'Khóa' : 'Mở khóa'}
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))
@@ -290,38 +308,67 @@ const Accounts = () => {
         )}
       </div>
 
-      {/* Create/Edit Modal */}
-      {isModalOpen && (
+      {/* Change Password Modal */}
+      {isPasswordModalOpen && editingAccount && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
             <div className="p-6">
-              <h2 className="text-xl font-bold mb-4">
-                {editingId ? 'Cập nhật tài khoản' : 'Tạo tài khoản mới'}
-              </h2>
-              <form onSubmit={handleSubmit}>
+              <div className="flex items-center gap-2 mb-4">
+                <Key className="text-blue-600" size={24} />
+                <h2 className="text-xl font-bold">Thay đổi mật khẩu</h2>
+              </div>
+              
+              <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-600">
+                  <strong>Tài khoản:</strong> {editingAccount.username} ({editingAccount.role === 'admin' ? 'Quản trị viên' : 'Nhân viên'})
+                </p>
+                <p className="text-sm text-gray-600">
+                  <strong>Họ tên:</strong> {editingAccount.fullName}
+                </p>
+              </div>
+
+              <form onSubmit={handlePasswordSubmit}>
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Tên đăng nhập <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Mật khẩu hiện tại <span className="text-red-500">*</span>
+                  </label>
                   <input
-                    type="text"
-                    name="username"
-                    value={formData.username}
-                    onChange={handleInputChange}
-                    className="w-full p-2 border rounded"
-                    placeholder="Nhập tên đăng nhập..."
+                    type="password"
+                    name="currentPassword"
+                    value={passwordData.currentPassword}
+                    onChange={handlePasswordChange}
+                    className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Nhập mật khẩu hiện tại..."
                     required
-                    disabled={editingId ? true : false}
                   />
                 </div>
 
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Mật khẩu <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Mật khẩu mới <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    className={`w-full p-2 border rounded ${passwordError ? 'border-red-500' : ''}`}
-                    placeholder="Nhập mật khẩu..."
+                    name="newPassword"
+                    value={passwordData.newPassword}
+                    onChange={handlePasswordChange}
+                    className={`w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent ${passwordError ? 'border-red-500' : ''}`}
+                    placeholder="Nhập mật khẩu mới..."
+                    required
+                  />
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Xác nhận mật khẩu mới <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="password"
+                    name="confirmPassword"
+                    value={passwordData.confirmPassword}
+                    onChange={handlePasswordChange}
+                    className={`w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent ${passwordError ? 'border-red-500' : ''}`}
+                    placeholder="Nhập lại mật khẩu mới..."
                     required
                   />
                   {passwordError && (
@@ -329,61 +376,28 @@ const Accounts = () => {
                   )}
                 </div>
 
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Họ tên <span className="text-red-500">*</span></label>
-                  <input
-                    type="text"
-                    name="fullName"
-                    value={formData.fullName}
-                    onChange={handleInputChange}
-                    className="w-full p-2 border rounded"
-                    placeholder="Nhập họ tên..."
-                    required
-                  />
-                </div>
-
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Vai trò <span className="text-red-500">*</span></label>
-                  <select
-                    name="role"
-                    value={formData.role}
-                    onChange={handleInputChange}
-                    className="w-full p-2 border rounded"
-                    required
-                  >
-                    <option value="staff">Staff</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                </div>
-
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Trạng thái <span className="text-red-500">*</span></label>
-                  <select
-                    name="status"
-                    value={formData.status}
-                    onChange={handleInputChange}
-                    className="w-full p-2 border rounded"
-                    required
-                  >
-                    <option value="active">Hoạt động</option>
-                    <option value="locked">Khóa</option>
-                  </select>
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                  <p className="text-yellow-800 text-xs">
+                    <strong>Lưu ý:</strong> Mật khẩu mới phải có ít nhất 6 ký tự. Sau khi thay đổi, 
+                    tài khoản sẽ cần đăng nhập lại với mật khẩu mới.
+                  </p>
                 </div>
 
                 <div className="flex justify-end space-x-3">
                   <button
                     type="button"
-                    onClick={handleCloseModal}
+                    onClick={handleClosePasswordModal}
                     className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
                   >
                     Hủy
                   </button>
                   <button
                     type="submit"
-                    disabled={!!passwordError}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    disabled={!!passwordError || loading}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
                   >
-                    {editingId ? 'Cập nhật' : 'Tạo tài khoản'}
+                    <Key size={16} />
+                    {loading ? 'Đang xử lý...' : 'Thay đổi mật khẩu'}
                   </button>
                 </div>
               </form>

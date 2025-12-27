@@ -30,8 +30,8 @@ export const queries = {
   getUserByUsername: db.prepare('SELECT * FROM TAIKHOAN WHERE TenDangNhap = ?'),
   getAllAccounts: db.prepare('SELECT * FROM TAIKHOAN ORDER BY MaTK DESC'),
   createAccount: db.prepare(`
-    INSERT INTO TAIKHOAN (TenChuTaiKhoan, TenDangNhap, MatKhau, QuyenHan) 
-    VALUES (?, ?, ?, ?)
+    INSERT INTO TAIKHOAN (TenChuTaiKhoan, TenDangNhap, MatKhau, QuyenHan, TrangThai) 
+    VALUES (?, ?, ?, ?, 'active')
   `),
   updateAccount: db.prepare(`
     UPDATE TAIKHOAN 
@@ -41,6 +41,11 @@ export const queries = {
   updateAccountWithPassword: db.prepare(`
     UPDATE TAIKHOAN 
     SET TenChuTaiKhoan = ?, TenDangNhap = ?, MatKhau = ?, QuyenHan = ? 
+    WHERE MaTK = ?
+  `),
+  updateAccountStatus: db.prepare(`
+    UPDATE TAIKHOAN 
+    SET TrangThai = ? 
     WHERE MaTK = ?
   `),
   deleteAccount: db.prepare('DELETE FROM TAIKHOAN WHERE MaTK = ?'),

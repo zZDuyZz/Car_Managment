@@ -41,7 +41,7 @@ const AdminLayout = ({ onLogout }) => {
         <nav className="flex-1 overflow-y-auto py-4">
           <NavItem
             to="/admin/accounts"
-            label="Quản lý tài khoản"
+            label="Bảo mật hệ thống"
             active={isActive('/admin/accounts')}
             onClick={() => setActiveTab('accounts')}
           />

@@ -26,6 +26,13 @@ router.post('/login', async (req, res) => {
       });
     }
 
+    // Check if account is locked (chỉ áp dụng cho staff)
+    if (user.QuyenHan === 'staff' && user.TrangThai === 'locked') {
+      return res.status(403).json({ 
+        error: 'Account is locked. Please contact administrator.' 
+      });
+    }
+
     // For demo purposes, we'll check plain text password
     // In production, use bcrypt.compare(password, user.MatKhau)
     if (password !== user.MatKhau) {
@@ -52,7 +59,8 @@ router.post('/login', async (req, res) => {
         id: user.MaTK,
         username: user.TenDangNhap,
         fullName: user.TenChuTaiKhoan,
-        role: user.QuyenHan
+        role: user.QuyenHan,
+        status: user.TrangThai || 'active'
       },
       token
     });
