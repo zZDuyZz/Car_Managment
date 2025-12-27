@@ -120,11 +120,13 @@ const Reports = () => {
                 <tbody className="divide-y divide-gray-200">
                     {reportData.map((row, index) => (
                         <tr key={index} className="hover:bg-gray-50">
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                 {row.Month}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {row.CarsRepaired}
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    {row.CarsRepaired} xe
+                                </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                 {formatCurrency(row.TotalLaborCost)}
@@ -138,6 +140,25 @@ const Reports = () => {
                         </tr>
                     ))}
                 </tbody>
+                <tfoot className="bg-gray-50">
+                    <tr>
+                        <td className="px-6 py-3 text-sm font-medium text-gray-900">
+                            Tổng cộng
+                        </td>
+                        <td className="px-6 py-3 text-sm font-bold text-blue-600">
+                            {reportData.reduce((sum, row) => sum + row.CarsRepaired, 0)} xe
+                        </td>
+                        <td className="px-6 py-3 text-sm font-bold text-gray-900">
+                            {formatCurrency(reportData.reduce((sum, row) => sum + row.TotalLaborCost, 0))}
+                        </td>
+                        <td className="px-6 py-3 text-sm font-bold text-gray-900">
+                            {formatCurrency(reportData.reduce((sum, row) => sum + row.TotalPartsCost, 0))}
+                        </td>
+                        <td className="px-6 py-3 text-sm font-bold text-green-600">
+                            {formatCurrency(reportData.reduce((sum, row) => sum + row.TotalRevenue, 0))}
+                        </td>
+                    </tr>
+                </tfoot>
             </table>
         </div>
     );
@@ -167,24 +188,43 @@ const Reports = () => {
                 <tbody className="divide-y divide-gray-200">
                     {reportData.map((row, index) => (
                         <tr key={index} className="hover:bg-gray-50">
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                 {row.TenVatTuPhuTung}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                 {row.BeginningBalance}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600">
-                                {row.TotalImported || 0}
+                                +{row.TotalImported || 0}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600">
-                                {row.TotalUsed || 0}
+                                -{row.TotalUsed || 0}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
                                 {row.CurrentStock}
                             </td>
                         </tr>
                     ))}
                 </tbody>
+                <tfoot className="bg-gray-50">
+                    <tr>
+                        <td className="px-6 py-3 text-sm font-medium text-gray-900">
+                            Tổng cộng
+                        </td>
+                        <td className="px-6 py-3 text-sm font-bold text-gray-900">
+                            {reportData.reduce((sum, row) => sum + row.BeginningBalance, 0)}
+                        </td>
+                        <td className="px-6 py-3 text-sm font-bold text-green-600">
+                            +{reportData.reduce((sum, row) => sum + (row.TotalImported || 0), 0)}
+                        </td>
+                        <td className="px-6 py-3 text-sm font-bold text-red-600">
+                            -{reportData.reduce((sum, row) => sum + (row.TotalUsed || 0), 0)}
+                        </td>
+                        <td className="px-6 py-3 text-sm font-bold text-blue-600">
+                            {reportData.reduce((sum, row) => sum + row.CurrentStock, 0)}
+                        </td>
+                    </tr>
+                </tfoot>
             </table>
         </div>
     );
@@ -307,8 +347,41 @@ const Reports = () => {
                                 <p className="text-gray-500">Không có dữ liệu trong khoảng thời gian này</p>
                             </div>
                         ) : (
-                            <div className="bg-white border rounded-lg">
-                                {formData.reportType === 'revenue' ? renderRevenueReport() : renderInventoryReport()}
+                            <div className="space-y-6">
+                                {/* Summary Cards */}
+                                {formData.reportType === 'revenue' && (
+                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                                        <div className="bg-blue-50 p-4 rounded-lg">
+                                            <div className="text-blue-600 text-sm font-medium">Tổng xe sửa</div>
+                                            <div className="text-2xl font-bold text-blue-900">
+                                                {reportData.reduce((sum, row) => sum + row.CarsRepaired, 0)}
+                                            </div>
+                                        </div>
+                                        <div className="bg-green-50 p-4 rounded-lg">
+                                            <div className="text-green-600 text-sm font-medium">Tổng tiền công</div>
+                                            <div className="text-2xl font-bold text-green-900">
+                                                {formatCurrency(reportData.reduce((sum, row) => sum + row.TotalLaborCost, 0))}
+                                            </div>
+                                        </div>
+                                        <div className="bg-purple-50 p-4 rounded-lg">
+                                            <div className="text-purple-600 text-sm font-medium">Tổng phụ tùng</div>
+                                            <div className="text-2xl font-bold text-purple-900">
+                                                {formatCurrency(reportData.reduce((sum, row) => sum + row.TotalPartsCost, 0))}
+                                            </div>
+                                        </div>
+                                        <div className="bg-orange-50 p-4 rounded-lg">
+                                            <div className="text-orange-600 text-sm font-medium">Tổng doanh thu</div>
+                                            <div className="text-2xl font-bold text-orange-900">
+                                                {formatCurrency(reportData.reduce((sum, row) => sum + row.TotalRevenue, 0))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                                
+                                {/* Report Table */}
+                                <div className="bg-white border rounded-lg">
+                                    {formData.reportType === 'revenue' ? renderRevenueReport() : renderInventoryReport()}
+                                </div>
                             </div>
                         )}
                     </div>

@@ -36,34 +36,6 @@ router.get('/revenue', (req, res) => {
   }
 });
 
-// Test endpoint to check current data
-router.get('/test-data', (req, res) => {
-  try {
-    // Get all repairs
-    const repairs = queries.getAllRepairs.all();
-    
-    // Get all payments  
-    const payments = queries.getAllPayments.all();
-    
-    console.log('Current repairs:', repairs);
-    console.log('Current payments:', payments);
-    
-    res.json({
-      success: true,
-      repairs: repairs,
-      payments: payments,
-      repairCount: repairs.length,
-      paymentCount: payments.length
-    });
-  } catch (error) {
-    console.error('Error getting test data:', error);
-    res.status(500).json({ 
-      error: 'Internal Server Error',
-      message: error.message 
-    });
-  }
-});
-
 // Get inventory report by month
 router.get('/inventory', (req, res) => {
   try {
@@ -78,8 +50,8 @@ router.get('/inventory', (req, res) => {
 
     console.log('Getting inventory report for:', fromDate, 'to', toDate);
     
-    // Inventory query needs 0 parameters for now (simplified)
-    const inventoryData = queries.getInventoryReport.all();
+    // Inventory query needs 4 parameters: fromDate, toDate for imports, fromDate, toDate for usage
+    const inventoryData = queries.getInventoryReport.all(fromDate, toDate, fromDate, toDate);
     
     console.log('Inventory data:', inventoryData);
     

@@ -203,6 +203,25 @@ export const queries = {
   `),
   deletePayment: db.prepare('DELETE FROM PHIEUTHUTIEN WHERE MaPhieuThuTien = ?'),
   
+  // Import queries
+  getAllImports: db.prepare(`
+    SELECT pn.*, k.TenVatTuPhuTung
+    FROM PHIEUNHAPVTPT pn
+    LEFT JOIN KHO k ON pn.MaPhuTung = k.MaPhuTung
+    ORDER BY pn.ThoiDiem DESC
+  `),
+  getImportById: db.prepare(`
+    SELECT pn.*, k.TenVatTuPhuTung
+    FROM PHIEUNHAPVTPT pn
+    LEFT JOIN KHO k ON pn.MaPhuTung = k.MaPhuTung
+    WHERE pn.MaPNVTPT = ?
+  `),
+  createImport: db.prepare(`
+    INSERT INTO PHIEUNHAPVTPT (MaPhuTung, SoLuong, GhiChu, ThoiDiem) 
+    VALUES (?, ?, ?, datetime('now', 'localtime'))
+  `),
+  deleteImport: db.prepare('DELETE FROM PHIEUNHAPVTPT WHERE MaPNVTPT = ?'),
+  
   // Report queries
   getRevenueReport: db.prepare(`
     SELECT 
@@ -222,11 +241,40 @@ export const queries = {
       k.MaPhuTung,
       k.TenVatTuPhuTung,
       k.SoLuong as CurrentStock,
-      0 as TotalImported,
-      0 as TotalUsed,
-      k.SoLuong as BeginningBalance
+      COALESCE(imports.TotalImported, 0) as TotalImported,
+      COALESCE(usage.TotalUsed, 0) as TotalUsed,
+      (k.SoLuong + COALESCE(usage.TotalUsed, 0) - COALESCE(imports.TotalImported, 0)) as BeginningBalance
     FROM KHO k
+    LEFT JOIN (
+      SELECT 
+        pn.MaPhuTung,
+        SUM(pn.SoLuong) as TotalImported
+      FROM PHIEUNHAPVTPT pn
+      WHERE date(pn.ThoiDiem) BETWEEN ? AND ?
+      GROUP BY pn.MaPhuTung
+    ) imports ON k.MaPhuTung = imports.MaPhuTung
+    LEFT JOIN (
+      SELECT 
+        ct.MaPhuTung,
+        SUM(ct.SoLuong) as TotalUsed
+      FROM CHITIETPHIEUSUACHUA ct
+      JOIN PHIEUSUACHUA p ON ct.MaPhieuSuaChua = p.MaPhieuSuaChua
+      WHERE date(p.NgaySua) BETWEEN ? AND ?
+        AND ct.MaPhuTung IS NOT NULL
+      GROUP BY ct.MaPhuTung
+    ) usage ON k.MaPhuTung = usage.MaPhuTung
     ORDER BY k.TenVatTuPhuTung
+  `),
+  
+  // Settings queries
+  getSettings: db.prepare(`
+    SELECT MaThamSo, GiaTri 
+    FROM THAMSO 
+    WHERE MaThamSo IN ('Q_MAX_VEHICLE_PER_DAY', 'Q_NUM_BRANDS', 'Q_MAX_PARTS', 'Q_MAX_LABORS')
+  `),
+  createOrUpdateSetting: db.prepare(`
+    INSERT OR REPLACE INTO THAMSO (MaThamSo, TenThamSo, GiaTri, GhiChu) 
+    VALUES (?, ?, ?, ?)
   `),
 };
 
