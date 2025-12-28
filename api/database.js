@@ -225,15 +225,16 @@ export const queries = {
   // Report queries
   getRevenueReport: db.prepare(`
     SELECT 
+      date(p.NgaySua) as Date,
       strftime('%Y-%m', p.NgaySua) as Month,
       COUNT(DISTINCT p.MaPhieuSuaChua) as CarsRepaired,
       COALESCE(SUM(p.TienCong), 0) as TotalLaborCost,
       COALESCE(SUM(p.TienPhuTung), 0) as TotalPartsCost,
       COALESCE(SUM(p.TongTien), 0) as TotalRevenue
     FROM PHIEUSUACHUA p
-    WHERE date(p.NgaySua) BETWEEN ? AND ?
-    GROUP BY strftime('%Y-%m', p.NgaySua)
-    ORDER BY Month
+    WHERE date(p.NgaySua) BETWEEN date(?) AND date(?)
+    GROUP BY date(p.NgaySua)
+    ORDER BY Date
   `),
   
   getInventoryReport: db.prepare(`
@@ -250,7 +251,7 @@ export const queries = {
         pn.MaPhuTung,
         SUM(pn.SoLuong) as TotalImported
       FROM PHIEUNHAPVTPT pn
-      WHERE date(pn.ThoiDiem) BETWEEN ? AND ?
+      WHERE date(pn.ThoiDiem) BETWEEN date(?) AND date(?)
       GROUP BY pn.MaPhuTung
     ) imports ON k.MaPhuTung = imports.MaPhuTung
     LEFT JOIN (
@@ -259,7 +260,7 @@ export const queries = {
         SUM(ct.SoLuong) as TotalUsed
       FROM CHITIETPHIEUSUACHUA ct
       JOIN PHIEUSUACHUA p ON ct.MaPhieuSuaChua = p.MaPhieuSuaChua
-      WHERE date(p.NgaySua) BETWEEN ? AND ?
+      WHERE date(p.NgaySua) BETWEEN date(?) AND date(?)
         AND ct.MaPhuTung IS NOT NULL
       GROUP BY ct.MaPhuTung
     ) usage ON k.MaPhuTung = usage.MaPhuTung
