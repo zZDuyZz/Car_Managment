@@ -9,6 +9,7 @@ const Vehicles = () => {
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [limits, setLimits] = useState(null);
   const [formData, setFormData] = useState({
     licensePlate: '',
     brand: '',
@@ -37,6 +38,23 @@ const Vehicles = () => {
     };
     
     fetchCustomers();
+  }, []);
+  
+  // Fetch limits
+  useEffect(() => {
+    const fetchLimits = async () => {
+      try {
+        const response = await fetch('http://localhost:3001/api/limits');
+        const data = await response.json();
+        if (data.success) {
+          setLimits(data.data);
+        }
+      } catch (err) {
+        console.error('Error fetching limits:', err);
+      }
+    };
+    
+    fetchLimits();
   }, []);
   
   const handleInputChange = (e) => {
@@ -70,6 +88,12 @@ const Vehicles = () => {
       return;
     }
     
+    // Check limits before submitting
+    if (limits && !limits.vehicles.canAdd) {
+      alert(`Đã đạt giới hạn ${limits.vehicles.limit} xe/ngày. Không thể tiếp nhận thêm xe hôm nay.`);
+      return;
+    }
+    
     try {
       const requestData = {
         BienSo: formData.licensePlate,
@@ -94,6 +118,12 @@ const Vehicles = () => {
         alert('Tiếp nhận xe thành công!');
         setIsModalOpen(false);
         fetchVehicles();
+        // Refresh limits
+        const limitsResponse = await fetch('http://localhost:3001/api/limits');
+        const limitsData = await limitsResponse.json();
+        if (limitsData.success) {
+          setLimits(limitsData.data);
+        }
         // Reset form
         setFormData({
           licensePlate: '',
@@ -106,7 +136,14 @@ const Vehicles = () => {
           notes: ''
         });
       } else {
-        alert('Có lỗi xảy ra khi tiếp nhận xe: ' + (data.error || data.message || ''));
+        // Handle specific error messages from backend
+        if (data.error === 'VEHICLE_LIMIT_EXCEEDED') {
+          alert(data.message);
+        } else if (data.error === 'BRAND_LIMIT_EXCEEDED') {
+          alert(data.message);
+        } else {
+          alert('Có lỗi xảy ra khi tiếp nhận xe: ' + (data.error || data.message || ''));
+        }
       }
     } catch (err) {
       console.error('Error submitting vehicle:', err);
@@ -179,12 +216,89 @@ const Vehicles = () => {
         <h1 className="text-2xl font-bold text-gray-800">Quản lý xe</h1>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+          disabled={limits && !limits.vehicles.canAdd}
+          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          title={limits && !limits.vehicles.canAdd ? `Đã đạt giới hạn ${limits.vehicles.limit} xe/ngày` : ''}
         >
           <PlusCircle size={20} />
           <span>Tiếp nhận xe</span>
         </button>
       </div>
+
+      {/* Limits Display */}
+      {limits && (
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">📊 Quy định hệ thống</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white rounded-lg p-3 shadow-sm">
+              <div className="text-xs text-gray-600 mb-1">Xe tiếp nhận hôm nay</div>
+              <div className="flex items-baseline justify-between">
+                <span className={`text-2xl font-bold ${limits.vehicles.canAdd ? 'text-green-600' : 'text-red-600'}`}>
+                  {limits.vehicles.current}
+                </span>
+                <span className="text-sm text-gray-500">/ {limits.vehicles.limit}</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                <div 
+                  className={`h-2 rounded-full transition-all ${limits.vehicles.canAdd ? 'bg-green-500' : 'bg-red-500'}`}
+                  style={{ width: `${Math.min((limits.vehicles.current / limits.vehicles.limit) * 100, 100)}%` }}
+                ></div>
+              </div>
+              {!limits.vehicles.canAdd && (
+                <div className="text-xs text-red-600 mt-2 font-medium">⚠️ Đã đạt giới hạn</div>
+              )}
+            </div>
+
+            <div className="bg-white rounded-lg p-3 shadow-sm">
+              <div className="text-xs text-gray-600 mb-1">Số hãng xe</div>
+              <div className="flex items-baseline justify-between">
+                <span className={`text-2xl font-bold ${limits.brands.canAdd ? 'text-blue-600' : 'text-orange-600'}`}>
+                  {limits.brands.current}
+                </span>
+                <span className="text-sm text-gray-500">/ {limits.brands.limit}</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                <div 
+                  className={`h-2 rounded-full transition-all ${limits.brands.canAdd ? 'bg-blue-500' : 'bg-orange-500'}`}
+                  style={{ width: `${Math.min((limits.brands.current / limits.brands.limit) * 100, 100)}%` }}
+                ></div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg p-3 shadow-sm">
+              <div className="text-xs text-gray-600 mb-1">Loại phụ tùng</div>
+              <div className="flex items-baseline justify-between">
+                <span className={`text-2xl font-bold ${limits.parts.canAdd ? 'text-purple-600' : 'text-orange-600'}`}>
+                  {limits.parts.current}
+                </span>
+                <span className="text-sm text-gray-500">/ {limits.parts.limit}</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                <div 
+                  className={`h-2 rounded-full transition-all ${limits.parts.canAdd ? 'bg-purple-500' : 'bg-orange-500'}`}
+                  style={{ width: `${Math.min((limits.parts.current / limits.parts.limit) * 100, 100)}%` }}
+                ></div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg p-3 shadow-sm">
+              <div className="text-xs text-gray-600 mb-1">Loại dịch vụ</div>
+              <div className="flex items-baseline justify-between">
+                <span className={`text-2xl font-bold ${limits.services.canAdd ? 'text-indigo-600' : 'text-orange-600'}`}>
+                  {limits.services.current}
+                </span>
+                <span className="text-sm text-gray-500">/ {limits.services.limit}</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                <div 
+                  className={`h-2 rounded-full transition-all ${limits.services.canAdd ? 'bg-indigo-500' : 'bg-orange-500'}`}
+                  style={{ width: `${Math.min((limits.services.current / limits.services.limit) * 100, 100)}%` }}
+                ></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">

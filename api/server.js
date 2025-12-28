@@ -16,6 +16,7 @@ import reportRoutes from './routes/reports.js';
 import importRoutes from './routes/imports.js';
 import settingsRoutes from './routes/settings.js';
 import demoRoutes from './routes/demo.js';
+import { getCurrentLimits } from './middleware/validateSettings.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -41,6 +42,9 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/imports', importRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/demo', demoRoutes);
+
+// Get current limits (for frontend display)
+app.get('/api/limits', getCurrentLimits);
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -1,5 +1,6 @@
 import express from 'express';
 import { queries } from '../database.js';
+import { validateServicesLimit } from '../middleware/validateSettings.js';
 
 const router = express.Router();
 
@@ -14,6 +15,7 @@ router.get('/', (req, res) => {
   } catch (error) {
     console.error('Get services error:', error);
     res.status(500).json({ 
+      success: false,
       error: 'Failed to fetch services' 
     });
   }
@@ -27,6 +29,7 @@ router.get('/:id', (req, res) => {
     
     if (!service) {
       return res.status(404).json({ 
+        success: false,
         error: 'Service not found' 
       });
     }
@@ -38,25 +41,28 @@ router.get('/:id', (req, res) => {
   } catch (error) {
     console.error('Get service error:', error);
     res.status(500).json({ 
+      success: false,
       error: 'Failed to fetch service' 
     });
   }
 });
 
-// Create new service
-router.post('/', (req, res) => {
+// Create new service (with validation middleware)
+router.post('/', validateServicesLimit, (req, res) => {
   try {
     const { name, price } = req.body;
 
     // Validation
     if (!name || !price) {
       return res.status(400).json({ 
+        success: false,
         error: 'Name and price are required' 
       });
     }
 
     if (price < 0) {
       return res.status(400).json({ 
+        success: false,
         error: 'Price must be positive' 
       });
     }
@@ -76,6 +82,7 @@ router.post('/', (req, res) => {
   } catch (error) {
     console.error('Create service error:', error);
     res.status(500).json({ 
+      success: false,
       error: 'Failed to create service' 
     });
   }
@@ -89,12 +96,14 @@ router.put('/:id', (req, res) => {
 
     if (!name || !price) {
       return res.status(400).json({ 
+        success: false,
         error: 'Name and price are required' 
       });
     }
 
     if (price < 0) {
       return res.status(400).json({ 
+        success: false,
         error: 'Price must be positive' 
       });
     }
@@ -103,6 +112,7 @@ router.put('/:id', (req, res) => {
     
     if (result.changes === 0) {
       return res.status(404).json({ 
+        success: false,
         error: 'Service not found' 
       });
     }
@@ -114,6 +124,7 @@ router.put('/:id', (req, res) => {
   } catch (error) {
     console.error('Update service error:', error);
     res.status(500).json({ 
+      success: false,
       error: 'Failed to update service' 
     });
   }
@@ -128,6 +139,7 @@ router.delete('/:id', (req, res) => {
     
     if (result.changes === 0) {
       return res.status(404).json({ 
+        success: false,
         error: 'Service not found' 
       });
     }
@@ -139,6 +151,7 @@ router.delete('/:id', (req, res) => {
   } catch (error) {
     console.error('Delete service error:', error);
     res.status(500).json({ 
+      success: false,
       error: 'Failed to delete service' 
     });
   }

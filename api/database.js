@@ -277,6 +277,28 @@ export const queries = {
     INSERT OR REPLACE INTO THAMSO (MaThamSo, TenThamSo, GiaTri, GhiChu) 
     VALUES (?, ?, ?, ?)
   `),
+  
+  // Validation queries for settings enforcement
+  countVehiclesToday: db.prepare(`
+    SELECT COUNT(*) as count 
+    FROM XE 
+    WHERE date(NgayTiepNhan) = date('now', 'localtime')
+  `),
+  countBrands: db.prepare(`
+    SELECT COUNT(DISTINCT MaHX) as count FROM HIEUXE
+  `),
+  countParts: db.prepare(`
+    SELECT COUNT(*) as count FROM KHO
+  `),
+  countServices: db.prepare(`
+    SELECT COUNT(*) as count FROM TIENCONG
+  `),
+  getBrandByName: db.prepare(`
+    SELECT * FROM HIEUXE WHERE TenHieuXe = ?
+  `),
+  createBrand: db.prepare(`
+    INSERT INTO HIEUXE (TenHieuXe) VALUES (?)
+  `),
 };
 
 export default db;
