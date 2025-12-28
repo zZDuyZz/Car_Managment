@@ -75,7 +75,6 @@ export default function AdminSettings() {
         {
             title: "Quy định tiếp nhận xe",
             description: "Cấu hình các thông số tiếp nhận và xử lý xe",
-            icon: "🚗",
             items: [
                 {
                     label: "Số lượng xe tối đa/ngày",
@@ -96,7 +95,6 @@ export default function AdminSettings() {
         {
             title: "Quản lý vật tư",
             description: "Cấu hình thông số quản lý vật tư và dịch vụ",
-            icon: "📦",
             items: [
                 {
                     label: "Số loại phụ tùng",
@@ -139,12 +137,9 @@ export default function AdminSettings() {
                     {settingsGroups.map((group, groupIndex) => (
                         <div key={groupIndex} className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
                             <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50">
-                                <div className="flex items-center">
-                                    <span className="text-2xl mr-3">{group.icon}</span>
-                                    <div>
-                                        <h2 className="text-lg font-semibold text-gray-800">{group.title}</h2>
-                                        <p className="text-sm text-gray-600 mt-1">{group.description}</p>
-                                    </div>
+                                <div>
+                                    <h2 className="text-lg font-semibold text-gray-800">{group.title}</h2>
+                                    <p className="text-sm text-gray-600 mt-1">{group.description}</p>
                                 </div>
                             </div>
                             <div className="p-6">
