@@ -10,7 +10,8 @@ const AdminLayout = ({ onLogout }) => {
   useEffect(() => {
     const path = location.pathname;
     if (path.includes('accounts')) setActiveTab('accounts');
-    else if (path.includes('reception')) setActiveTab('reception');
+    else if (path.includes('customers')) setActiveTab('customers');
+    else if (path.includes('repairs')) setActiveTab('repairs');
     else if (path.includes('reports')) setActiveTab('reports');
     else if (path.includes('import')) setActiveTab('import');
     else if (path.includes('settings')) setActiveTab('settings');
@@ -44,6 +45,20 @@ const AdminLayout = ({ onLogout }) => {
             label="Bảo mật hệ thống"
             active={isActive('/admin/accounts')}
             onClick={() => setActiveTab('accounts')}
+          />
+          
+          <NavItem
+            to="/admin/customers"
+            label="Quản lý khách hàng"
+            active={isActive('/admin/customers')}
+            onClick={() => setActiveTab('customers')}
+          />
+          
+          <NavItem
+            to="/admin/repairs"
+            label="Quản lý sửa chữa"
+            active={isActive('/admin/repairs')}
+            onClick={() => setActiveTab('repairs')}
           />
           
           <NavItem

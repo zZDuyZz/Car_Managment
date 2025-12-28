@@ -1,0 +1,99 @@
+flowchart TD
+    Start([🚀 Khởi động ứng dụng]) --> Login[🔐 Màn hình đăng nhập<br/>LoginPage.jsx<br/>Route: /login]
+    
+    Login --> |Admin credentials| AdminDash[👨‍💼 Admin Dashboard<br/>AdminLayout.jsx<br/>Route: /admin]
+    Login --> |Staff credentials| StaffDash[👨‍🔧 Staff Dashboard<br/>StaffLayout.jsx<br/>Route: /staff]
+    Login --> SignUp[📝 Đăng ký<br/>SignUpPage.jsx<br/>Route: /signup]
+    
+    SignUp --> Login
+    
+    %% Admin Section - Purple Theme
+    AdminDash --> Security[🔐 Bảo mật hệ thống<br/>Accounts.jsx<br/>Route: /admin/accounts<br/>• Quản lý 2 tài khoản<br/>• Đổi mật khẩu<br/>• Khóa/mở tài khoản]
+    
+    AdminDash --> AdminCustomers[👥 Quản lý khách hàng<br/>AdminCustomers.jsx<br/>Route: /admin/customers<br/>• Xem/sửa/xóa khách hàng<br/>• Xem xe của khách hàng<br/>• Giám sát dữ liệu Staff]
+    
+    AdminDash --> AdminRepairs[🔧 Quản lý sửa chữa<br/>AdminRepairs.jsx<br/>Route: /admin/repairs<br/>• Xem/xóa phiếu sửa chữa<br/>• Xem chi tiết phiếu<br/>• Giám sát hoạt động Staff]
+    
+    AdminDash --> Reports[📊 Báo cáo<br/>Reports.jsx<br/>Route: /admin/reports<br/>• Báo cáo doanh thu<br/>• Báo cáo tồn kho<br/>• Xuất CSV]
+    
+    AdminDash --> Import[📦 Nhập hàng<br/>ImportGoods.jsx<br/>Route: /admin/import<br/>• Danh sách phiếu nhập<br/>• Thêm phiếu nhập<br/>• Tìm kiếm & xóa]
+    
+    AdminDash --> Settings[⚙️ Cấu hình hệ thống<br/>AdminSettings.jsx<br/>Route: /admin/settings<br/>• Số xe tối đa/ngày<br/>• Số hãng xe<br/>• Số loại phụ tùng<br/>• Số loại dịch vụ]
+    
+    %% Staff Section - Green Theme
+    StaffDash --> Customers[👥 Quản lý khách hàng<br/>Customers.jsx<br/>Route: /staff/customers<br/>• Danh sách khách hàng<br/>• Thêm/sửa khách hàng<br/>• Tìm kiếm<br/>• Xem lịch sử xe]
+    
+    StaffDash --> Vehicles[🚗 Tiếp nhận xe<br/>Vehicles.jsx<br/>Route: /staff/vehicles<br/>• Danh sách xe<br/>• Tiếp nhận xe mới<br/>• Tạo phiếu sửa chữa<br/>• Tìm kiếm xe]
+    
+    StaffDash --> Repairs[🔧 Phiếu sửa chữa<br/>Repairs.jsx<br/>Route: /staff/repairs<br/>• Danh sách phiếu SC<br/>• Xem chi tiết<br/>• Trạng thái thanh toán<br/>• Xóa phiếu]
+    
+    StaffDash --> Invoices[💰 Hóa đơn & Thanh toán<br/>Invoices.jsx<br/>Route: /staff/invoices<br/>• Danh sách hóa đơn<br/>• Lịch sử thanh toán<br/>• Thu tiền<br/>• Quản lý công nợ]
+    
+    %% Modal Connections - Orange Theme
+    Customers --> |Thêm mới| CustomerModal[📝 Modal Khách hàng<br/>• Form thông tin KH<br/>• Validation<br/>• Lưu/Hủy]
+    CustomerModal --> Customers
+    
+    Vehicles --> |Tiếp nhận| VehicleModal[🚗 Modal Tiếp nhận xe<br/>• Thông tin xe<br/>• Chọn khách hàng<br/>• Ngày tiếp nhận]
+    VehicleModal --> Vehicles
+    
+    Vehicles --> |Sửa chữa| RepairModal[🔧 Modal Phiếu sửa chữa<br/>• Chọn dịch vụ<br/>• Chọn phụ tùng<br/>• Kiểm tra tồn kho<br/>• Tính tổng tiền]
+    RepairModal --> Repairs
+    
+    Repairs --> |Chi tiết| RepairDetailModal[📋 Modal Chi tiết SC<br/>• Danh sách dịch vụ<br/>• Danh sách phụ tùng<br/>• Tổng tiền chi tiết]
+    RepairDetailModal --> Repairs
+    
+    Invoices --> |Thu tiền| PaymentModal[💰 Modal Thu tiền<br/>• Chọn khách hàng<br/>• Số tiền thu<br/>• Ghi chú<br/>• Cập nhật công nợ]
+    PaymentModal --> Invoices
+    
+    Import --> |Thêm phiếu| ImportModal[📦 Modal Nhập hàng<br/>• Chọn phụ tùng<br/>• Số lượng nhập<br/>• Ghi chú<br/>• Cập nhật tồn kho]
+    ImportModal --> Import
+    
+    AdminCustomers --> |Sửa KH| CustomerEditModal[📝 Modal Sửa khách hàng<br/>• Form thông tin KH<br/>• Validation<br/>• Cập nhật/Hủy]
+    CustomerEditModal --> AdminCustomers
+    
+    AdminCustomers --> |Xem xe| CustomerVehiclesModal[🚗 Modal Xe của KH<br/>• Danh sách xe<br/>• Thông tin chi tiết<br/>• Lịch sử tiếp nhận]
+    CustomerVehiclesModal --> AdminCustomers
+    
+    AdminRepairs --> |Chi tiết| AdminRepairDetailModal[📋 Modal Chi tiết SC<br/>• Thông tin phiếu<br/>• Danh sách dịch vụ<br/>• Danh sách phụ tùng<br/>• Tổng tiền chi tiết]
+    AdminRepairDetailModal --> AdminRepairs
+    
+    Security --> |Đổi MK| PasswordModal[🔑 Modal Đổi mật khẩu<br/>• Mật khẩu hiện tại<br/>• Mật khẩu mới<br/>• Xác nhận MK]
+    PasswordModal --> Security
+    
+    %% Data Flow - Dashed Lines
+    Customers -.->|Chọn KH| Vehicles
+    Vehicles -.->|Tạo phiếu| Repairs
+    Repairs -.->|Cần thanh toán| Invoices
+    Import -.->|Cập nhật kho| Vehicles
+    Settings -.->|Cấu hình| Vehicles
+    
+    %% Admin Supervision Flow
+    AdminCustomers -.->|Giám sát| Customers
+    AdminRepairs -.->|Giám sát| Repairs
+    AdminCustomers -.->|Đồng bộ dữ liệu| Vehicles
+    AdminRepairs -.->|Đồng bộ dữ liệu| Invoices
+    
+    %% Logout Flow
+    AdminDash --> |Đăng xuất| Logout[🚪 Đăng xuất]
+    StaffDash --> |Đăng xuất| Logout
+    Logout --> Login
+    
+    %% Error Handling
+    Login --> |Sai thông tin| LoginError[❌ Lỗi đăng nhập<br/>• Thông báo lỗi<br/>• Thử lại]
+    LoginError --> Login
+    
+    %% Styling Classes
+    classDef startStyle fill:#ffeb3b,stroke:#f57f17,stroke-width:3px,color:#000
+    classDef loginStyle fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef adminStyle fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef staffStyle fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+    classDef modalStyle fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef flowStyle fill:#f1f8e9,stroke:#33691e,stroke-width:1px,stroke-dasharray: 5 5
+    classDef errorStyle fill:#ffebee,stroke:#c62828,stroke-width:2px
+    
+    class Start startStyle
+    class Login,SignUp,Logout,LoginError loginStyle
+    class AdminDash,Security,Reports,Import,Settings,AdminCustomers,AdminRepairs adminStyle
+    class StaffDash,Customers,Vehicles,Repairs,Invoices staffStyle
+    class CustomerModal,VehicleModal,RepairModal,RepairDetailModal,PaymentModal,ImportModal,PasswordModal,CustomerEditModal,CustomerVehiclesModal,AdminRepairDetailModal modalStyle
+    class LoginError errorStyle

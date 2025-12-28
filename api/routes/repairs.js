@@ -19,6 +19,26 @@ router.get('/', (req, res) => {
   }
 });
 
+// Get repair details only
+router.get('/:id/details', (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Get repair details
+    const details = queries.getRepairDetails.all(id);
+    
+    res.json({
+      success: true,
+      data: details
+    });
+  } catch (error) {
+    console.error('Get repair details error:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch repair details' 
+    });
+  }
+});
+
 // Get repair by ID
 router.get('/:id', (req, res) => {
   try {

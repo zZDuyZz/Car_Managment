@@ -18,6 +18,8 @@ import Accounts from './pages/Admin/Accounts';
 import Reports from './pages/Admin/Reports';
 import ImportGoods from './pages/Admin/ImportGoods';
 import AdminSettings from './pages/Admin/AdminSettings';
+import AdminCustomers from './pages/Admin/AdminCustomers';
+import AdminRepairs from './pages/Admin/AdminRepairs';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -89,6 +91,8 @@ function App() {
         >
           <Route index element={<Navigate to="/admin/accounts" replace />} />
           <Route path="accounts" element={<Accounts />} />
+          <Route path="customers" element={<AdminCustomers />} />
+          <Route path="repairs" element={<AdminRepairs />} />
           <Route path="reports" element={<Reports />} />
           <Route path="import" element={<ImportGoods />} />
           <Route path="settings" element={<AdminSettings />} />

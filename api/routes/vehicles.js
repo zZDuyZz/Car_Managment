@@ -30,6 +30,24 @@ router.get('/', (req, res) => {
   }
 });
 
+// Get vehicles by customer ID
+router.get('/by-customer/:customerId', (req, res) => {
+  try {
+    const { customerId } = req.params;
+    const vehicles = queries.getVehiclesByCustomer.all(customerId);
+    
+    res.json({
+      success: true,
+      data: vehicles
+    });
+  } catch (error) {
+    console.error('Get customer vehicles error:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch customer vehicles' 
+    });
+  }
+});
+
 // Get vehicle by license plate
 router.get('/plate/:plate', (req, res) => {
   try {
