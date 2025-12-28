@@ -211,35 +211,18 @@ const AdminCustomers = () => {
                       {customer.TenKH}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <div className="flex items-center">
-                        <Phone className="w-4 h-4 text-gray-400 mr-2" />
-                        {customer.DienThoai || '-'}
-                      </div>
+                      {customer.DienThoai || '-'}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
-                      <div className="flex items-center">
-                        <MapPin className="w-4 h-4 text-gray-400 mr-2" />
-                        {customer.DiaChi || '-'}
-                      </div>
+                      {customer.DiaChi || '-'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <div className="flex items-center">
-                        <DollarSign className="w-4 h-4 text-gray-400 mr-1" />
-                        <span className={customer.TienNo > 0 ? 'text-red-600 font-medium' : 'text-green-600'}>
-                          {formatCurrency(customer.TienNo || 0)}
-                        </span>
-                      </div>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <span className={customer.TienNo > 0 ? 'text-red-600 font-medium' : 'text-green-600'}>
+                        {formatCurrency(customer.TienNo || 0)}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => fetchCustomerVehicles(customer.MaKH)}
-                          className="text-blue-600 hover:text-blue-900 flex items-center"
-                          title="Xem xe của khách hàng"
-                        >
-                          <Eye className="w-4 h-4 mr-1" />
-                          Xe
-                        </button>
+                      <div className="flex space-x-4">
                         <button
                           onClick={() => handleEdit(customer)}
                           className="text-indigo-600 hover:text-indigo-900 flex items-center"

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Wrench, Search, Trash2, Calendar, DollarSign, User, Car } from 'lucide-react';
+import { Wrench, Search, Trash2 } from 'lucide-react';
 
 const AdminRepairs = () => {
   const [repairs, setRepairs] = useState([]);
@@ -147,35 +147,23 @@ const AdminRepairs = () => {
                         #{repair.MaPhieuSuaChua}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        <div className="flex items-center">
-                          <Car className="w-4 h-4 text-gray-400 mr-2" />
-                          {repair.BienSo}
+                        {repair.BienSo}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <div>
+                          <div>{repair.TenKH}</div>
+                          <div className="text-xs text-gray-500">{repair.DienThoai}</div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        <div className="flex items-center">
-                          <User className="w-4 h-4 text-gray-400 mr-2" />
-                          <div>
-                            <div>{repair.TenKH}</div>
-                            <div className="text-xs text-gray-500">{repair.DienThoai}</div>
-                          </div>
-                        </div>
+                        {formatDate(repair.NgaySua)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        <div className="flex items-center">
-                          <Calendar className="w-4 h-4 text-gray-400 mr-2" />
-                          {formatDate(repair.NgaySua)}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        <div className="flex items-center">
-                          <DollarSign className="w-4 h-4 text-gray-400 mr-1" />
-                          <div>
-                            <div className="font-medium">{formatCurrency(repair.TongTien || 0)}</div>
-                            <div className="text-xs text-gray-500">
-                              Công: {formatCurrency(repair.TienCong || 0)} | 
-                              PT: {formatCurrency(repair.TienPhuTung || 0)}
-                            </div>
+                        <div>
+                          <div className="font-medium">{formatCurrency(repair.TongTien || 0)}</div>
+                          <div className="text-xs text-gray-500">
+                            Công: {formatCurrency(repair.TienCong || 0)} | 
+                            PT: {formatCurrency(repair.TienPhuTung || 0)}
                           </div>
                         </div>
                       </td>
@@ -187,11 +175,11 @@ const AdminRepairs = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <button
                           onClick={() => handleDeleteRepair(repair.MaPhieuSuaChua)}
-                          className="text-red-600 hover:text-red-900 flex items-center"
+                          className="text-red-600 hover:text-red-800 flex items-center gap-1"
                           title="Xóa phiếu"
                         >
-                          <Trash2 className="w-4 h-4 mr-1" />
-                          Xóa
+                          <Trash2 size={16} />
+                          <span>Xóa</span>
                         </button>
                       </td>
                     </tr>

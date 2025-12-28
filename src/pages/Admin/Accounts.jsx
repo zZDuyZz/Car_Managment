@@ -188,10 +188,9 @@ const Accounts = () => {
 
   const getRoleBadge = (role) => {
     return (
-      <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${
+      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
         role === 'admin' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
       }`}>
-        <Shield size={12} />
         {role === 'admin' ? 'Quản trị viên' : 'Nhân viên'}
       </span>
     );
@@ -199,10 +198,9 @@ const Accounts = () => {
 
   const getStatusBadge = (status) => {
     return (
-      <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${
+      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
         status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
       }`}>
-        {status === 'active' ? <Unlock size={12} /> : <Lock size={12} />}
         {status === 'active' ? 'Hoạt động' : 'Bị khóa'}
       </span>
     );
@@ -274,27 +272,22 @@ const Accounts = () => {
                     {getStatusBadge(account.status || 'active')}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center space-x-4">
                       <button
                         onClick={() => handleOpenPasswordModal(account)}
-                        className="text-blue-600 hover:text-blue-900 flex items-center gap-1"
-                        title="Thay đổi mật khẩu"
+                        className="text-blue-600 hover:text-blue-800"
                       >
-                        <Key size={16} />
                         Đổi mật khẩu
                       </button>
                       
                       {account.role === 'staff' && (
                         <button
                           onClick={() => handleToggleAccess(account)}
-                          className={`flex items-center gap-1 ${
-                            account.status === 'active' 
-                              ? 'text-red-600 hover:text-red-900' 
-                              : 'text-green-600 hover:text-green-900'
-                          }`}
-                          title={account.status === 'active' ? 'Khóa truy cập' : 'Mở khóa truy cập'}
+                          className={account.status === 'active' 
+                            ? 'text-red-600 hover:text-red-800' 
+                            : 'text-green-600 hover:text-green-800'
+                          }
                         >
-                          {account.status === 'active' ? <Lock size={16} /> : <Unlock size={16} />}
                           {account.status === 'active' ? 'Khóa' : 'Mở khóa'}
                         </button>
                       )}

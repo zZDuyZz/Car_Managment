@@ -233,27 +233,23 @@ Tổng tiền: ${formatCurrency(repair.totalCost)}
                       {formatCurrency(repair.totalCost)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex justify-end space-x-2">
+                      <div className="flex justify-end space-x-4">
                         <button
                           onClick={() => handleView(repair)}
-                          className="text-gray-600 hover:text-gray-900"
-                          title="Xem chi tiết"
+                          className="text-blue-600 hover:text-blue-800"
                         >
-                          <Eye size={18} />
+                          Xem
                         </button>
-                        
                         <button
                           onClick={() => handleExportInvoice(repair)}
-                          className="text-green-600 hover:text-green-900 mr-3"
-                          title="In hóa đơn"
+                          className="text-green-600 hover:text-green-800"
                         >
-                          <FileText size={18} />
+                          In hóa đơn
                         </button>
-                        
                         {repair.status === 'paid' && (
                           <button
                             onClick={() => handleDelete(repair.id)}
-                            className="text-red-600 hover:text-red-900"
+                            className="text-red-600 hover:text-red-800"
                             title="Xóa phiếu (chỉ phiếu đã thanh toán)"
                           >
                             <Trash2 size={18} />
