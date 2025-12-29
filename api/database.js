@@ -17,10 +17,10 @@ db.pragma('foreign_keys = ON');
 // Test connection
 try {
   const result = db.prepare('SELECT COUNT(*) as count FROM TAIKHOAN').get();
-  console.log('✅ Database connected successfully');
-  console.log(`📊 Found ${result.count} accounts in database`);
+  console.log('Database connected successfully');
+  console.log(`Found ${result.count} accounts in database`);
 } catch (error) {
-  console.error('❌ Database connection failed:', error.message);
+  console.error('Database connection failed:', error.message);
   process.exit(1);
 }
 

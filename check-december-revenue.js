@@ -45,7 +45,7 @@ db.all(query, [], (err, rows) => {
         totalRevenue += row.totalRevenue || 0;
         totalRepairs += row.repairCount || 0;
         
-        console.log(`📅 Ngày: ${row.date}`);
+        console.log(`Ngày: ${row.date}`);
         console.log(`   - Số phiếu sửa: ${row.repairCount}`);
         console.log(`   - Doanh thu: ${formatCurrency(row.totalRevenue || 0)}`);
         console.log(`   - Danh sách mã phiếu: ${row.repairIds || 'Không có'}`);

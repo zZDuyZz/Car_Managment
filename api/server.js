@@ -74,9 +74,9 @@ app.use((req, res) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-  console.log(`📊 API Health: http://localhost:${PORT}/api/health`);
-  console.log(`🔧 Database: SQLite`);
+  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`API Health: http://localhost:${PORT}/api/health`);
+  console.log(`Database: SQLite`);
 });
 
 export default app;
